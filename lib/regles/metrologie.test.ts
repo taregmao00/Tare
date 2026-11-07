@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ajouterAnnees, jourParis, joursEntre } from "./dates";
+import { ajouterMois, dernierJourDuMois, jourParis, joursEntre, moisDe } from "./dates";
 import {
   affichageVignette,
   consequencesBon,
@@ -14,29 +14,35 @@ describe("dates (heure de Paris)", () => {
   it("23:30 UTC le 9 novembre = 10 novembre à Paris", () => {
     expect(jourParis(new Date("2026-11-09T23:30:00Z"))).toBe("2026-11-10");
   });
-  it("+1 an depuis un 29 février → 28 février", () => {
-    expect(ajouterAnnees("2028-02-29", 1)).toBe("2029-02-28");
-  });
   it("jours entre deux dates, changement d'heure compris", () => {
     expect(joursEntre("2026-03-28", "2026-03-30")).toBe(2);
   });
+  it("mois : passage d'année et dernier jour (années bissextiles comprises)", () => {
+    expect(moisDe("2026-11-07")).toBe("2026-11");
+    expect(ajouterMois("2026-11", 14)).toBe("2028-01");
+    expect(dernierJourDuMois("2028-02")).toBe("2028-02-29");
+    expect(dernierJourDuMois("2027-02")).toBe("2027-02-28");
+    expect(() => ajouterMois("2026-13", 1)).toThrow();
+  });
 });
 
-describe("affichage de la vignette (§6.8)", () => {
-  it("verte, échéance à plus de 45 j → vert", () => {
-    expect(affichageVignette("verte", "2027-01-01", aujourdhui).couleur).toBe("vert");
+describe("affichage de la vignette (§6.8) : échéance = mois, valable jusqu'à la fin du mois", () => {
+  it("échéance à plus de 45 j de la fin du mois → vert", () => {
+    expect(affichageVignette("verte", "2027-01", aujourdhui).couleur).toBe("vert");
   });
-  it("verte, échéance à 45 j → orange « Vérification dans 45 j »", () => {
-    expect(affichageVignette("verte", "2026-12-22", aujourdhui)).toEqual({ couleur: "orange", libelle: "Vérification dans 45 j" });
+  it("fin du mois à 45 j → orange « Vérification dans 45 j » ; à 46 j → vert", () => {
+    expect(affichageVignette("verte", "2026-12", "2026-11-16")).toEqual({ couleur: "orange", libelle: "Vérification dans 45 j" });
+    expect(affichageVignette("verte", "2026-12", "2026-11-15").couleur).toBe("vert");
   });
-  it("échéance aujourd'hui → encore valable (orange)", () => {
-    expect(affichageVignette("verte", aujourdhui, aujourdhui).couleur).toBe("orange");
+  it("échéance 11/2026 : encore valable le 30 novembre, périmée le 1er décembre", () => {
+    expect(affichageVignette("verte", "2026-11", "2026-11-30")).toEqual({ couleur: "orange", libelle: "Vérification dans 0 j" });
+    expect(affichageVignette("verte", "2026-11", "2026-12-01")).toEqual({ couleur: "rouge", libelle: "Vignette périmée depuis 1 j" });
   });
-  it("échéance dépassée → rouge « Vignette périmée »", () => {
-    expect(affichageVignette("verte", "2026-11-04", aujourdhui)).toEqual({ couleur: "rouge", libelle: "Vignette périmée depuis 3 j" });
+  it("échéance 10/2026 vue le 7 novembre → périmée depuis 7 j", () => {
+    expect(affichageVignette("verte", "2026-10", aujourdhui)).toEqual({ couleur: "rouge", libelle: "Vignette périmée depuis 7 j" });
   });
   it("À vérifier et vignette rouge → rouge", () => {
-    expect(affichageVignette("a_verifier", "2027-06-01", aujourdhui).couleur).toBe("rouge");
+    expect(affichageVignette("a_verifier", "2027-06", aujourdhui).couleur).toBe("rouge");
     expect(affichageVignette("rouge", null, aujourdhui).couleur).toBe("rouge");
   });
   it("verte sans échéance → jamais en vert", () => {
@@ -45,23 +51,26 @@ describe("affichage de la vignette (§6.8)", () => {
 });
 
 describe("échéance après vérification conforme", () => {
-  it("proposée à +1 an", () => {
-    expect(echeanceProposee(aujourdhui)).toBe("2027-11-07");
+  it("proposée au même mois +1 an", () => {
+    expect(echeanceProposee(aujourdhui)).toBe("2027-11");
   });
-  it("refusée si antérieure ou égale à aujourd'hui", () => {
-    expect(controlerEcheance("2026-11-06", aujourdhui).valide).toBe(false);
-    expect(controlerEcheance(aujourdhui, aujourdhui).valide).toBe(false);
+  it("refusée si elle tombe le mois en cours ou avant", () => {
+    expect(controlerEcheance("2026-11", aujourdhui).valide).toBe(false);
+    expect(controlerEcheance("2026-10", aujourdhui).valide).toBe(false);
   });
-  it("acceptée demain, sans avertissement", () => {
-    expect(controlerEcheance("2026-11-08", aujourdhui)).toEqual({ valide: true, avertissement: null });
+  it("acceptée du mois prochain jusqu'à +1 an, sans avertissement", () => {
+    expect(controlerEcheance("2026-12", aujourdhui)).toEqual({ valide: true, avertissement: null });
+    expect(controlerEcheance("2027-11", aujourdhui)).toEqual({ valide: true, avertissement: null });
   });
-  it("acceptée à +2 ans pile, avec avertissement", () => {
-    const r = controlerEcheance("2028-11-07", aujourdhui);
-    expect(r.valide).toBe(true);
-    expect(r.valide && r.avertissement).toBeTruthy();
+  it("au-delà de +1 an et jusqu'à +2 ans pile : acceptée avec avertissement", () => {
+    for (const mois of ["2027-12", "2028-11"]) {
+      const r = controlerEcheance(mois, aujourdhui);
+      expect(r.valide).toBe(true);
+      expect(r.valide && r.avertissement).toBeTruthy();
+    }
   });
   it("refusée au-delà de +2 ans", () => {
-    expect(controlerEcheance("2028-11-08", aujourdhui).valide).toBe(false);
+    expect(controlerEcheance("2028-12", aujourdhui).valide).toBe(false);
   });
 });
 
@@ -96,11 +105,11 @@ describe("conséquences d'un bon signé", () => {
 
   it("INS-0802 conforme + INS-0803 non conforme : verte, rouge, 1 remise en conformité pour INS-0803 seul", () => {
     const c = consequencesBon("verification", [
-      { instrumentId: "INS-0802", resultat: "conforme", nouvelleEcheance: "2027-11-07" },
+      { instrumentId: "INS-0802", resultat: "conforme", nouvelleEcheance: "2027-11" },
       { instrumentId: "INS-0803", resultat: "non_conforme" },
     ], false);
     expect(c.misesAJour).toEqual([
-      { instrumentId: "INS-0802", statut: "verte", echeance: "2027-11-07", motif: "Vérification conforme" },
+      { instrumentId: "INS-0802", statut: "verte", echeance: "2027-11", motif: "Vérification conforme" },
       { instrumentId: "INS-0803", statut: "rouge", motif: "Vérification non conforme" },
     ]);
     expect(c.interventionsACreer).toEqual([
@@ -115,8 +124,8 @@ describe("conséquences d'un bon signé", () => {
 
 describe("priorité d'une demande de vérification depuis le Parc", () => {
   it("vignette périmée → urgente ; échéance proche → normale ; client critique → urgente", () => {
-    expect(prioriteDemandeVerification([{ statut: "verte", echeance: "2026-11-01" }], false, aujourdhui)).toBe("urgente");
-    expect(prioriteDemandeVerification([{ statut: "verte", echeance: "2026-12-01" }], false, aujourdhui)).toBe("normale");
-    expect(prioriteDemandeVerification([{ statut: "verte", echeance: "2026-12-01" }], true, aujourdhui)).toBe("urgente");
+    expect(prioriteDemandeVerification([{ statut: "verte", echeance: "2026-10" }], false, aujourdhui)).toBe("urgente");
+    expect(prioriteDemandeVerification([{ statut: "verte", echeance: "2026-12" }], false, aujourdhui)).toBe("normale");
+    expect(prioriteDemandeVerification([{ statut: "verte", echeance: "2026-12" }], true, aujourdhui)).toBe("urgente");
   });
 });

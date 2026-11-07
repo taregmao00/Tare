@@ -51,16 +51,43 @@ export function joursEntre(de: JourCalendaire, a: JourCalendaire): number {
   return Math.round((enMs(a) - enMs(de)) / MS_PAR_JOUR);
 }
 
-export function ajouterJours(jour: JourCalendaire, n: number): JourCalendaire {
-  return depuisMs(enMs(jour) + n * MS_PAR_JOUR);
+/**
+ * Un mois au format "AAAA-MM", par exemple "2027-11".
+ * Sert aux échéances de vérification : la vignette n'indique que le mois et l'année,
+ * et reste valable jusqu'au dernier jour de ce mois.
+ */
+export type MoisCalendaire = string;
+
+const FORMAT_MOIS = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
+function decomposerMois(mois: MoisCalendaire): [number, number] {
+  const m = FORMAT_MOIS.exec(mois);
+  if (!m) throw new Error(`Mois invalide : « ${mois} » (format attendu AAAA-MM)`);
+  return [Number(m[1]), Number(m[2])];
 }
 
-/**
- * Ajoute des années en gardant le jour et le mois.
- * Cas du 29 février : on prend le dernier jour de février (28) de l'année d'arrivée.
- */
-export function ajouterAnnees(jour: JourCalendaire, n: number): JourCalendaire {
-  const [a, mo, j] = decomposer(jour);
-  const dernierJourDuMois = new Date(Date.UTC(a + n, mo, 0)).getUTCDate();
-  return depuisMs(Date.UTC(a + n, mo - 1, Math.min(j, dernierJourDuMois)));
+/** Le mois d'un jour : "2026-11-07" → "2026-11". */
+export function moisDe(jour: JourCalendaire): MoisCalendaire {
+  decomposer(jour);
+  return jour.slice(0, 7);
+}
+
+/** Ajoute (ou retire) des mois : "2026-11" + 14 → "2028-01". */
+export function ajouterMois(mois: MoisCalendaire, n: number): MoisCalendaire {
+  const [a, mo] = decomposerMois(mois);
+  const total = a * 12 + (mo - 1) + n;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+}
+
+/** Nombre de mois de `de` à `a` (positif si `a` est après `de`). */
+export function moisEntre(de: MoisCalendaire, a: MoisCalendaire): number {
+  const [a1, m1] = decomposerMois(de);
+  const [a2, m2] = decomposerMois(a);
+  return (a2 - a1) * 12 + (m2 - m1);
+}
+
+/** Dernier jour d'un mois : "2028-02" → "2028-02-29". */
+export function dernierJourDuMois(mois: MoisCalendaire): JourCalendaire {
+  const [a, mo] = decomposerMois(mois);
+  return depuisMs(Date.UTC(a, mo, 0));
 }

@@ -160,6 +160,7 @@ Les deux limites et les trois montants sont des réglages entreprise. Les distan
 ### 6.5 Pièces et petit matériel
 
 - **Pièces catalogue** : choisies par code article, prix du catalogue non modifiable sur le bon, quantité modifiable. Ajouter un code déjà présent incrémente la quantité.
+- Les quantités acceptent **3 décimales au maximum** (ex. 2,5 m de câble).
 - **Petit matériel** : lignes libres (désignation obligatoire, quantité, prix unitaire HT libre). Raccourci « Forfait consommables » (15 € HT par défaut, réglable).
 - Hors ligne, le bon garde **le prix affiché sur le téléphone au moment de la signature**, même si le catalogue a changé entre-temps.
 - Les deux natures restent distinguées sur le bon et dans les exports.
@@ -209,8 +210,9 @@ Affichage :
 
 Règles automatiques à la signature d'un bon, **appliquées instrument par instrument** (une intervention automatique regroupe tous les instruments concernés du même bon) :
 - **Réparation ou installation avec « chaîne de mesure touchée » coché** (capteur, câble de mesure, réglage, scellé brisé) → instrument passe **À vérifier** (motif : vérification après réparation, ou vérification primitive pour une installation) + création automatique d'une intervention **Vérification** (urgente si client critique).
-- **Vérification conforme** → vignette verte, nouvelle échéance **proposée à +1 an**, modifiable par le technicien **entre demain et +2 ans** (certains instruments ont une périodicité de 2 ans), avec un avertissement visible au-delà d'un an. La périodicité par type d'instrument viendra après la V1.
-- **Vérification non conforme** → vignette rouge + création automatique d'une intervention **Réparation** « Remise en conformité ».
+- **L'échéance est un mois et une année** (comme sur la vignette, ex. 11/2027) : la vignette est valable **jusqu'au dernier jour de ce mois inclus**, périmée dès le 1er du mois suivant. Les jours restants (alerte à 45 j) se comptent jusqu'à ce dernier jour.
+- **Vérification conforme** → vignette verte, nouvelle échéance **proposée au même mois +1 an**, modifiable par le technicien **du mois suivant jusqu'au même mois +2 ans** (certains instruments ont une périodicité de 2 ans), avec un avertissement visible au-delà d'un an. La périodicité par type d'instrument viendra après la V1.
+- **Vérification non conforme** → vignette rouge + création automatique d'une intervention **Réparation** « Remise en conformité » (urgente si client critique).
 
 Ces créations automatiques sont faites **par le serveur à la synchronisation** (jamais par le téléphone), pour éviter les doublons. Hors ligne, le téléphone affiche « Vérification créée à l'envoi » et met déjà l'instrument en « À vérifier » localement.
 
@@ -320,7 +322,7 @@ La barre du chrono actif s'affiche au-dessus de la navigation (temps, montant, P
   - chevauchement : segments 10:00–11:00 et 10:30–11:15 → 75 min
   - secondes sur le total : 10 segments de 4 min 40 s = 46 min 40 s → 46 min → 1 h facturée (et non 10 × 4 min = 40 min)
   - passages : 2 passages, 2 forfaits choisis, site à 18 km → 100 € ; 1 forfait choisi → 50 €
-  - échéance : refusée si antérieure ou égale à aujourd'hui, ou au-delà de +2 ans
+  - échéance (mois) : refusée si elle tombe le mois en cours ou avant, ou au-delà du même mois +2 ans ; une échéance 11/2026 est valable le 30/11/2026 et périmée le 01/12/2026
   - rectificatif : décocher « chaîne de mesure touchée » est refusé ; la cocher crée la vérification
   - plusieurs instruments : vérification de INS-0802 (conforme) et INS-0803 (non conforme) sur un bon → 1 seul forfait de déplacement, INS-0802 en vignette verte, INS-0803 en rouge, 1 intervention « Remise en conformité » créée pour INS-0803 seul
   - passages : chrono le lundi et le mardi → 2 passages calculés

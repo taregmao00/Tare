@@ -45,7 +45,7 @@ describe("réparation : chaîne de mesure touchée", () => {
 });
 
 describe("instruments ajoutés ou retirés", () => {
-  const origine = [{ instrumentId: "INS-0802", resultat: "conforme" as const, nouvelleEcheance: "2027-11-07" }];
+  const origine = [{ instrumentId: "INS-0802", resultat: "conforme" as const, nouvelleEcheance: "2027-11" }];
 
   it("retirer un instrument est refusé", () => {
     expect(controlerRectificatif("verification", origine, [])).toHaveLength(1);
@@ -65,6 +65,6 @@ describe("instruments ajoutés ou retirés", () => {
 
   it("modifier le résultat ou l'échéance d'un instrument déjà vérifié → refusé", () => {
     expect(controlerRectificatif("verification", origine, [{ ...origine[0], resultat: "non_conforme" }])).toHaveLength(1);
-    expect(controlerRectificatif("verification", origine, [{ ...origine[0], nouvelleEcheance: "2028-11-07" }])).toHaveLength(1);
+    expect(controlerRectificatif("verification", origine, [{ ...origine[0], nouvelleEcheance: "2028-11" }])).toHaveLength(1);
   });
 });

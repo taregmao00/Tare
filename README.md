@@ -1,6 +1,8 @@
 # Tare
 
 GMAO pour installateurs et réparateurs de balances (nom de travail).
+Version en ligne (développement) : https://tare-hr7q.vercel.app — mise à jour automatique à chaque envoi sur GitHub.
+
 Le cahier des charges complet est dans [CLAUDE.md](CLAUDE.md) ; `prototype.html` sert de référence pour les écrans.
 
 ## Commandes

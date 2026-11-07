@@ -1,0 +1,62 @@
+/* Couleurs de l'appli : thème clair par défaut, thème sombre si le téléphone est réglé en sombre. */
+:root {
+  --fond: #f6f7f9;
+  --texte: #1a1d23;
+  --texte-discret: #5b6270;
+  --accent: #1f6feb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #14171c;
+    --texte: #e8eaee;
+    --texte-discret: #9aa1ad;
+    --accent: #58a6ff;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--fond);
+  color: var(--texte);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px; /* jamais moins de 16 px (règle d'interface §7) */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Champs en 16 px minimum : évite le zoom automatique sur téléphone. */
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  font-size: max(16px, 1em);
+}
+
+.accueil {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 16px;
+}
+
+.accueil h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.discret {
+  color: var(--texte-discret);
+}

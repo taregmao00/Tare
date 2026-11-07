@@ -1,0 +1,802 @@
+<title>Tare GMAO</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout : appli mobile — en-tête collant, liste sur une colonne (max 640px), barre du chrono + onglets fixes en bas, fiches en panneau plein écran */
+:root{
+  --bg:#EEF1F0; --surface:#FFFFFF; --sunk:#E2E8E5; --ink:#15201D; --muted:#56655F; --line:#D3DBD8;
+  --accent:#1F4F8F; --accent-ink:#FFFFFF; --accent-soft:#DCE6F4;
+  --ok:#1C7543; --ok-soft:#DCF0E3; --warn:#8F5C06; --warn-soft:#F7EAD0; --crit:#B3261E; --crit-soft:#F8DDDA;
+  --run:#0E3C2A; --run-ink:#E9F6EF;
+  --paper:#FFFFFF; --paper-ink:#15201D; --paper-line:#D3DBD8;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --tabh:62px; --runh:0px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1412; --surface:#17201D; --sunk:#202B28; --ink:#E5ECE9; --muted:#98A7A1; --line:#2B3733;
+  --accent:#86AEEC; --accent-ink:#0E1A2E; --accent-soft:#1E2C44;
+  --ok:#5CC98A; --ok-soft:#163222; --warn:#E5B552; --warn-soft:#352812; --crit:#F17A6F; --crit-soft:#3A1916;
+  --run:#5CC98A; --run-ink:#0B1A12;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#17201D; --sunk:#202B28; --ink:#E5ECE9; --muted:#98A7A1; --line:#2B3733;
+  --accent:#86AEEC; --accent-ink:#0E1A2E; --accent-soft:#1E2C44;
+  --ok:#5CC98A; --ok-soft:#163222; --warn:#E5B552; --warn-soft:#352812; --crit:#F17A6F; --crit-soft:#3A1916;
+  --run:#5CC98A; --run-ink:#0B1A12;
+  color-scheme:dark }
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body.locked{overflow:hidden}
+body.has-run{--runh:58px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-size:12.5px}
+.tnum{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in,.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px}
+.brand{display:flex;align-items:baseline;gap:8px;min-width:0}
+.brand b{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:.02em;line-height:1}
+.brand span{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sync{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 10px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.sync.off i{background:var(--warn)}
+
+main.wrap{padding-block:18px calc(var(--tabh) + var(--runh) + env(safe-area-inset-bottom,0px) + 88px)}
+h1{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0}
+.sec{display:flex;flex-direction:column;gap:10px}
+.page{display:flex;flex-direction:column;gap:22px}
+.lede{color:var(--muted);margin:4px 0 0}
+
+.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.count{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 10px 8px;text-align:left;cursor:pointer}
+.count b{display:block;font-family:var(--display);font-size:28px;line-height:1;font-weight:700}
+.count span{font-size:12px;color:var(--muted);font-weight:500}
+.count.crit b{color:var(--crit)}
+.count[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+button.card{display:block;width:100%;text-align:left;cursor:pointer}
+button.card:active{background:var(--sunk)}
+.card.live{border-color:var(--run);box-shadow:inset 3px 0 0 var(--run)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.iv-title{font-weight:600;font-size:16px;margin-top:4px}
+.iv-sub{color:var(--muted);font-size:14px}
+.iv-meta{margin-top:8px;font-size:13px;color:var(--muted)}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:14px;color:var(--muted);text-align:center;font-size:14px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;line-height:1;padding:5px 8px;border-radius:999px;white-space:nowrap}
+.st-afa{background:var(--warn-soft);color:var(--warn)}
+.st-pri{background:var(--accent-soft);color:var(--accent)}
+.st-enc{background:var(--run);color:var(--run-ink)}
+.st-pau{background:var(--sunk);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.st-ter{background:var(--ok-soft);color:var(--ok)}
+.st-fac{background:var(--sunk);color:var(--muted)}
+.urg{background:var(--crit-soft);color:var(--crit)}
+.pulse{width:7px;height:7px;border-radius:50%;background:currentColor}
+@media (prefers-reduced-motion:no-preference){.pulse{animation:pl 1.4s ease-in-out infinite}@keyframes pl{50%{opacity:.25}}}
+
+.vig{display:flex;align-items:center;gap:10px;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600}
+.vig::before{content:"";flex:none;width:14px;height:18px;border-radius:3px;background:currentColor}
+.vig.ok{background:var(--ok-soft);color:var(--ok)}
+.vig.warn{background:var(--warn-soft);color:var(--warn)}
+.vig.crit{background:var(--crit-soft);color:var(--crit)}
+.vig small{display:block;font-weight:500;opacity:.9}
+.dot{display:inline-block;width:8px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.crit{background:var(--crit)}
+
+/* Chrono */
+.clock{border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line)}
+.clock.on{background:var(--run);color:var(--run-ink);border-color:var(--run)}
+.clock .t{font-family:var(--mono);font-size:44px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.clock .lbl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;opacity:.8}
+.clock .cost{display:flex;justify-content:space-between;gap:10px;font-size:14px;flex-wrap:wrap}
+.clock .cost b{font-family:var(--display);font-size:22px;font-weight:700}
+.clock .btn{border-color:currentColor;background:transparent;color:inherit}
+.clock.on .btn.primary{background:var(--run-ink);color:var(--run);border-color:var(--run-ink)}
+.clock-btns{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:9px;border:1px solid var(--line);background:var(--surface);padding:0 16px;font-weight:600;cursor:pointer;text-align:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.go{background:var(--run);color:var(--run-ink);border-color:var(--run)}
+.btn.block{width:100%}
+.btn.small{min-height:36px;padding:0 12px;font-size:14px}
+.link{background:none;border:0;padding:4px 0;color:var(--accent);font-weight:600;cursor:pointer;font-size:14px;text-align:left}
+.actions{display:flex;flex-direction:column;gap:8px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>span,legend{font-size:13px;font-weight:600;color:var(--muted)}
+input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea{width:100%;font-size:16px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:46px}
+textarea{resize:vertical;min-height:96px}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+legend{padding:0 6px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;cursor:pointer}
+.check input{width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-weight:600;cursor:pointer}
+.seg input{accent-color:var(--accent)}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.hint.warn{color:var(--warn);font-weight:600}
+.err{background:var(--crit-soft);color:var(--crit);border-radius:8px;padding:10px 12px;font-size:14px;font-weight:600;margin:0}
+.file{position:relative;overflow:hidden;align-self:flex-start}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumbs img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.sig{width:100%;height:150px;background:var(--paper);border:1px dashed var(--paper-line);border-radius:8px;touch-action:none;display:block}
+.money{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14.5px;margin:0}
+.money dt{color:var(--muted)}
+.money dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.money .tot{font-weight:700;color:var(--ink);border-top:1px solid var(--line);padding-top:6px}
+.line{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.line:first-child{border-top:0;padding-top:0}
+.line-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14.5px;min-width:0}
+.line-h input{flex:1;min-width:0}
+.line-n{display:grid;grid-template-columns:1fr 1.3fr auto;gap:8px;align-items:end}
+.line-n .link{padding-bottom:12px}
+.addrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.tag{font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:2px 6px;white-space:nowrap}
+
+.dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14.5px}
+.dl dt{color:var(--muted)}
+.dl dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.block{display:flex;flex-direction:column;gap:8px}
+.desc{margin:0;white-space:pre-wrap}
+.journal{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.journal li{display:grid;grid-template-columns:92px 1fr;gap:10px}
+.journal time{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+
+.paper{background:var(--paper);color:var(--paper-ink);border:1px solid var(--paper-line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.paper h3{font-family:var(--display);font-size:22px;margin:0;line-height:1}
+.paper .dl dt,.paper .money dt{color:#56655F}
+.paper .money .tot{color:var(--paper-ink);border-color:var(--paper-line)}
+.paper hr{border:0;border-top:1px solid var(--paper-line);margin:0}
+.paper img.signature{max-width:240px;height:auto;border-bottom:1px solid var(--paper-line)}
+.stamp{display:inline-flex;align-self:flex-start;font-size:12px;font-weight:600;border:1.5px solid currentColor;border-radius:4px;padding:3px 7px;text-transform:uppercase;letter-spacing:.06em}
+
+/* Barre du chrono + onglets */
+.runbar{position:fixed;left:0;right:0;z-index:6;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));background:var(--run);color:var(--run-ink)}
+.runbar-in{max-width:640px;margin:0 auto;height:58px;display:flex;align-items:center;gap:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.runbar .open{flex:1;min-width:0;background:none;border:0;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:1px;padding:0}
+.runbar .open span{font-size:12.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.runbar .open b{font-family:var(--mono);font-size:19px;font-weight:500;font-variant-numeric:tabular-nums}
+.runbar .pp{flex:none;border:1.5px solid currentColor;background:transparent;color:inherit;border-radius:9px;min-height:40px;padding:0 14px;font-weight:600;cursor:pointer}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);height:var(--tabh);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--accent)}
+.fab{position:fixed;z-index:6;right:max(16px,calc(env(safe-area-inset-right,0px) + 16px));bottom:calc(var(--tabh) + var(--runh) + env(safe-area-inset-bottom,0px) + 14px);background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;min-height:52px;padding:0 18px;font-weight:600;font-size:15px;box-shadow:0 6px 18px rgba(14,30,50,.25);cursor:pointer}
+
+#sheet{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column}
+#sheet[hidden]{display:none!important}
+.sheet-bar{flex:none;background:var(--surface);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.sheet-bar .top-in{justify-content:flex-start}
+.back{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:8px 4px;font-size:15px}
+.sheet-title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sheetScroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#sheetBody{padding-block:18px calc(env(safe-area-inset-bottom,0px) + 40px)}
+@media (prefers-reduced-motion:no-preference){ #sheet:not([hidden]){animation:slide .18s ease-out} @keyframes slide{from{transform:translateY(16px);opacity:.6}to{transform:none;opacity:1}} }
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tabh) + var(--runh) + env(safe-area-inset-bottom,0px) + 80px);z-index:30;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:10px;font-weight:600;font-size:14px;width:max-content;max-width:calc(100% - 32px)}
+.foot{font-size:13px;color:var(--muted);text-align:center;display:flex;flex-direction:column;gap:4px;align-items:center}
+@media (max-width:370px){ .counts{grid-template-columns:repeat(2,1fr)} .grid2{grid-template-columns:1fr} }
+</style>
+
+<header class="top"><div class="top-in">
+  <div class="brand"><b>Tare</b><span id="who"></span></div>
+  <button class="sync" id="sync" data-act="toggle-offline" type="button"></button>
+</div></header>
+
+<main class="wrap" id="main"></main>
+
+<button class="fab" data-act="new" type="button">+ Nouvelle demande</button>
+<div class="runbar" id="runbar" hidden></div>
+
+<nav class="tabs" aria-label="Sections"><div class="tabs-in">
+  <button class="tab" data-act="tab" data-tab="int" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor"/></svg>Interventions</button>
+  <button class="tab" data-act="tab" data-tab="parc" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19h16M6 19l1.5-8h9L18 19M12 11V7M8 7h8"/></svg>Parc</button>
+  <button class="tab" data-act="tab" data-tab="set" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>Réglages</button>
+</div></nav>
+
+<section id="sheet" hidden aria-modal="true" role="dialog">
+  <div class="sheet-bar"><div class="top-in"><button class="back" data-act="back" type="button">← Retour</button><span class="sheet-title" id="sheetTitle"></span></div></div>
+  <div id="sheetScroll"><div class="wrap" id="sheetBody"></div></div>
+</section>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+const DAY=86400000,MIN=60000;
+const T0=new Date();T0.setHours(0,0,0,0);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const rel=n=>{const d=new Date(T0);d.setDate(d.getDate()+n);return iso(d)};
+const parse=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+const until=s=>Math.round((parse(s)-T0)/DAY);
+const fDay=new Intl.DateTimeFormat('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+const fLong=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+const fHead=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+const fEur=new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'});
+const dShort=s=>fDay.format(parse(s));
+const dLong=s=>fLong.format(parse(s));
+const hm=ts=>{const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clockStr=ms=>{const s=Math.floor(ms/1000);return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60)};
+const durStr=min=>{min=Math.round(min);const h=Math.floor(min/60),m=min%60;return h?(h+' h'+(m?' '+pad(m):'')):(m+' min')};
+
+/* ---------- Données fictives ---------- */
+function seed(){
+  const now=Date.now();
+  const j=(t,d,h)=>({d:d||rel(0),h:h||'08:00',t});
+  const startRun=now-38*MIN;
+  return {v:2,seq:1048,bonSeq:154,
+  settings:{me:'k',rate:65,dep:{l1:20,l2:50,p1:50,p2:80,p3:120}},
+  catalogue:[
+    {code:'1',des:'Câble de capteur blindé 4 fils (le mètre)',pu:4.5},
+    {code:'2',des:'Capteur de pesage 2 t inox',pu:185},
+    {code:'3',des:'Bloc alimentation indicateur 12 V',pu:62}],
+  techs:[
+    {id:'k',name:'Karim B.',role:'Technicien',habil:true},
+    {id:'l',name:'Lucas M.',role:'Technicien',habil:false},
+    {id:'s',name:'Sophie R.',role:'Cheffe d’agence',habil:true}],
+  clients:[
+    {id:'c1',dist:18,name:'Carrière Ferrand',site:'Carrière de la Garrigue',addr:'Chemin des Plâtrières, Villeneuve',contact:'Resp. maintenance · 06 00 00 00 01',critique:true,note:'Un seul pont-bascule : expéditions à l’arrêt en cas de panne'},
+    {id:'c2',dist:32,name:'Fromagerie des Causses',site:'Atelier d’affinage',addr:'ZA du Plateau, Saint-Martin',contact:'Accueil · 04 00 00 00 02',critique:false},
+    {id:'c3',dist:4,name:'Boulangerie Arnal',site:'Magasin centre-ville',addr:'12 rue Basse, Villeneuve',contact:'Mme Arnal · 06 00 00 00 03',critique:true,note:'Une seule balance de vente'},
+    {id:'c4',dist:24,name:'Coopérative Saint-Clair',site:'Cave de réception',addr:'Route des Vignes, Saint-Clair',contact:'Technicien maintenance · 06 00 00 00 04',critique:false},
+    {id:'c5',dist:3,name:'Primeurs Dubois',site:'Halle du marché',addr:'Place du Marché, Villeneuve',contact:'M. Dubois · 06 00 00 00 05',critique:false,note:'Plusieurs balances : peut continuer à vendre'},
+    {id:'c6',dist:3,name:'Pharmacie du Marché',site:'Préparatoire',addr:'3 place du Marché, Villeneuve',contact:'Pharmacien titulaire · 04 00 00 00 06',critique:false}],
+  instruments:[
+    {id:'INS-0421',clientId:'c1',kind:'Pont-bascule 18 m',marque:'Tarvex',modele:'PB-18',serie:'TX18-2291',portee:'60 t',echelon:'20 kg',mill:2015,empl:'Entrée de site',vp:{statut:'verte',echeance:rel(363)}},
+    {id:'INS-0518',clientId:'c2',kind:'Plateforme inox',marque:'Balix',modele:'P300',serie:'BX-77810',portee:'300 kg',echelon:'100 g',mill:2019,empl:'Atelier d’affinage',vp:{statut:'verte',echeance:rel(9)}},
+    {id:'INS-0603',clientId:'c3',kind:'Balance poids-prix',marque:'Balix',modele:'C15',serie:'BX-31002',portee:'15 kg',echelon:'5 g',mill:2017,empl:'Comptoir de vente',vp:{statut:'verte',echeance:rel(214)}},
+    {id:'INS-0711',clientId:'c4',kind:'Plateforme de réception',marque:'Tarvex',modele:'PF-1500',serie:'TX-50417',portee:'1 500 kg',echelon:'500 g',mill:2014,empl:'Quai de réception',vp:{statut:'verte',echeance:rel(41)}},
+    {id:'INS-0712',clientId:'c4',kind:'Plateforme de réception',marque:'Tarvex',modele:'PF-1500',serie:'TX-61208',portee:'1 500 kg',echelon:'500 g',mill:2026,empl:'Quai 2 (en installation)',vp:{statut:'attente',echeance:null,motif:'Vérification primitive à réaliser'}},
+    {id:'INS-0802',clientId:'c5',kind:'Balance poids-prix',marque:'Balix',modele:'C15',serie:'BX-40118',portee:'15 kg',echelon:'5 g',mill:2018,empl:'Étal fruits',vp:{statut:'verte',echeance:rel(23)}},
+    {id:'INS-0803',clientId:'c5',kind:'Balance poids-prix',marque:'Balix',modele:'C15',serie:'BX-40119',portee:'15 kg',echelon:'5 g',mill:2018,empl:'Étal légumes',vp:{statut:'verte',echeance:rel(23)}},
+    {id:'INS-0910',clientId:'c6',kind:'Balance de précision',marque:'Balix',modele:'L6',serie:'BX-90055',portee:'6 kg',echelon:'0,1 g',mill:2020,empl:'Préparatoire',vp:{statut:'verte',echeance:rel(-4)}}],
+  interventions:[
+    {id:'INT-1046',type:'Réparation',clientId:'c4',instId:'INS-0711',statut:'en_cours',prio:'normale',tech:'k',recu:rel(-1),duree:'2 h',pers:1,desc:'Câble de capteur endommagé par des rongeurs, affichage instable.',segs:[{s:startRun,e:null}],journal:[j('Demande créée',rel(-1),'16:20'),j('Prise par Karim B.',rel(0),'07:45'),j('Chrono démarré',rel(0),hm(startRun))],bon:null},
+    {id:'INT-1041',type:'Réparation',clientId:'c1',instId:'INS-0421',statut:'a_faire',prio:'urgente',tech:null,recu:rel(0),duree:'3 h',pers:2,desc:'Indicateur en erreur, pesée impossible. Camions en attente sur site.',segs:[],journal:[j('Demande créée',rel(0),'07:52')],bon:null},
+    {id:'INT-1043',type:'Réparation',clientId:'c3',instId:'INS-0603',statut:'a_faire',prio:'urgente',tech:null,recu:rel(0),duree:'1 h',pers:1,desc:'Touche tare inopérante, vente très ralentie.',segs:[],journal:[j('Demande créée',rel(0),'08:05')],bon:null},
+    {id:'INT-1042',type:'Vérification',clientId:'c2',instId:'INS-0518',statut:'prise',prio:'normale',tech:'s',recu:rel(-5),duree:'1 h',pers:1,desc:'Vérification périodique.',segs:[],journal:[j('Demande créée',rel(-5),'10:10'),j('Prise par Sophie R.',rel(-1),'17:30')],bon:null},
+    {id:'INT-1044',type:'Installation',clientId:'c4',instId:'INS-0712',statut:'prise',prio:'normale',tech:'l',recu:rel(-10),duree:'2 jours',pers:2,desc:'Pose d’une seconde plateforme sur le quai 2 et raccordement à l’indicateur.',segs:[],journal:[j('Demande créée',rel(-10),'09:00'),j('Prise par Lucas M.',rel(-3),'14:00')],bon:null},
+    {id:'INT-1045',type:'Vérification',clientId:'c5',instId:'INS-0802',statut:'a_faire',prio:'normale',tech:null,recu:rel(-2),duree:'1 h',pers:1,desc:'Vérification périodique des deux balances (INS-0802 et INS-0803).',segs:[],journal:[j('Demande créée',rel(-2),'11:40')],bon:null},
+    {id:'INT-1047',type:'Vérification',clientId:'c6',instId:'INS-0910',statut:'a_faire',prio:'normale',tech:null,recu:rel(0),duree:'1 h',pers:1,desc:'Vignette périmée : vérification à faire rapidement.',segs:[],journal:[j('Demande créée',rel(0),'08:10')],bon:null},
+    {id:'INT-1039',type:'Vérification',clientId:'c1',instId:'INS-0421',statut:'terminee',prio:'normale',tech:'s',recu:rel(-20),duree:'3 h',pers:2,desc:'Vérification périodique avec camion étalon.',segs:[],journal:[j('Demande créée',rel(-20),'09:00'),j('Chrono démarré',rel(-2),'12:35'),j('Bon BI-2026-0153 signé',rel(-2),'15:40')],
+      bon:{numero:'BI-2026-0153',date:rel(-2),heure:'15:40',tech:'s',travaux:'Essais de charge avec camion étalon, essais d’excentration et de mobilité. Résultats dans les tolérances.',mesure:185,facture:180,rate:65,correction:null,km:18,dep:50,depL:'jusqu’à 20 km',pieces:'',metro:false,resultat:'conforme',echeance:rel(363),signataire:'Resp. maintenance',sig:null,photos:2,synced:true}},
+    {id:'INT-1037',type:'Réparation',clientId:'c2',instId:'INS-0518',statut:'facturee',prio:'normale',tech:'l',recu:rel(-8),duree:'1 h',pers:1,desc:'Indicateur qui s’éteint seul.',segs:[],journal:[j('Demande créée',rel(-8),'14:00'),j('Bon BI-2026-0149 signé',rel(-6),'10:15'),j('Marquée facturée',rel(-4),'09:30')],
+      bon:{numero:'BI-2026-0149',date:rel(-6),heure:'10:15',tech:'l',travaux:'Remplacement du bloc d’alimentation de l’indicateur. Aucun réglage métrologique, scellés intacts.',mesure:52,facture:60,rate:65,correction:null,km:32,dep:80,depL:'de 21 à 50 km',pieces:'',lines:[{kind:'ref',code:'3',des:'Bloc alimentation indicateur 12 V',qty:1,pu:62}],metro:false,resultat:null,echeance:null,signataire:'Accueil',sig:null,photos:1,synced:true}}
+  ]};
+}
+const KEY='tare-demo-v7';
+function load(){try{const s=localStorage.getItem(KEY);if(s){const o=JSON.parse(s);if(o&&o.v===2)return o}}catch(e){}return seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
+let db=load();
+
+const ui={tab:'int',filter:'all',stack:[],offline:false,pending:0,photos:{},lines:{},resetArm:false};
+let sig={has:false,c:null};
+
+const C=id=>db.clients.find(x=>x.id===id);
+const I=id=>db.instruments.find(x=>x.id===id);
+const TECH=id=>db.techs.find(x=>x.id===id);
+const INT=id=>db.interventions.find(x=>x.id===id);
+const ME=()=>TECH(db.settings.me);
+const ST={a_faire:['À faire','st-afa'],prise:['Prise','st-pri'],en_cours:['En cours','st-enc'],terminee:['Terminée','st-ter'],facturee:['Facturée','st-fac']};
+const ORDER={en_cours:0,a_faire:1,prise:2,terminee:3,facturee:4};
+const running=iv=>!!(iv.segs&&iv.segs.length&&!iv.segs[iv.segs.length-1].e);
+const elapsed=iv=>(iv.segs||[]).reduce((a,s)=>a+((s.e||Date.now())-s.s),0);
+function pill(iv){
+  if(iv.statut==='en_cours')return running(iv)?'<span class="pill st-enc"><i class="pulse"></i>En cours</span>':'<span class="pill st-pau">En pause</span>';
+  return `<span class="pill ${ST[iv.statut][1]}">${ST[iv.statut][0]}</span>`;
+}
+const urg=iv=>iv.prio==='urgente'&&!['terminee','facturee'].includes(iv.statut)?'<span class="pill urg">Urgent</span>':'';
+function log(iv,t){const d=new Date();iv.journal.push({d:iso(d),h:hm(d),t})}
+
+/* Main-d'œuvre : arrondi au pas supérieur, minimum facturé */
+/* Règle de l'agence : à la demi-heure la plus proche, minimum 30 min.
+   0–45 min → 30 min · 45 min–1 h 15 → 1 h · 1 h 15–1 h 45 → 1 h 30 · etc. */
+function billed(minutes){
+  const m=Math.floor(Math.max(0,minutes));
+  return m<=45?30:30*Math.ceil((m-15)/30);
+}
+const cost=(min,rate)=>min/60*rate;
+const ruleTxt=()=>'arrondi à la demi-heure (borne exacte vers le bas), minimum 30 min';
+const num=v=>String(v).replace('.',',');
+/* Déplacement au forfait selon la distance aller agence → site */
+function zoneOf(km){const d=db.settings.dep;
+  if(km<=d.l1)return{p:d.p1,l:'jusqu’à '+d.l1+' km'};
+  if(km<=d.l2)return{p:d.p2,l:'de '+(d.l1+1)+' à '+d.l2+' km'};
+  return{p:d.p3,l:'plus de '+d.l2+' km'};}
+const travel=tr=>tr.price!=null?tr.price:zoneOf(tr.km||0).p;
+const lineTot=l=>(Number(l.qty)||0)*(Number(l.pu)||0);
+const linesTot=L=>(L||[]).reduce((a,l)=>a+lineTot(l),0);
+const bonTotal=b=>cost(b.facture,b.rate)+(b.dep||0)+linesTot(b.lines);
+function lineRows(L){return (L||[]).filter(l=>Number(l.qty)>0).map(l=>`<dt>${l.kind==='ref'?'Code '+esc(l.code)+' · '+esc(l.des):'Petit matériel · '+(esc(l.des)||'sans désignation')} × ${num(l.qty)} × ${num(Number(l.pu).toFixed(2))} €</dt><dd>${fEur.format(lineTot(l))}</dd>`).join('')}
+function linesHtml(id){const L=ui.lines[id]||[];
+  if(!L.length)return '<p class="hint">Aucune pièce ni petit matériel pour l’instant.</p>';
+  return L.map((l,i)=>`<div class="line"><div class="line-h">${l.kind==='ref'?`<span class="mono">Code ${esc(l.code)}</span><span>${esc(l.des)}</span>`:`<span class="tag">Petit matériel</span><input data-line="${i}" data-f="des" id="ln-des-${i}" value="${esc(l.des)}" placeholder="Désignation (ex. : colliers, cosses, gaine)" aria-label="Désignation du petit matériel">`}</div>
+    <div class="line-n"><label class="fld"><span>Qté</span><input type="number" min="0" step="1" data-line="${i}" data-f="qty" id="ln-qty-${i}" value="${l.qty}" inputmode="decimal"></label>
+      <label class="fld"><span>Prix unit. HT (€)</span>${l.kind==='ref'?`<input id="ln-pu-${i}" value="${num(Number(l.pu).toFixed(2))}" disabled>`:`<input type="number" min="0" step="0.01" data-line="${i}" data-f="pu" id="ln-pu-${i}" value="${l.pu}" inputmode="decimal">`}</label>
+      <button type="button" class="link" data-act="del-line" data-i="${i}" data-id="${id}">Retirer</button></div></div>`).join('')}
+function drawLines(id){const el=document.getElementById('lines');if(el)el.innerHTML=linesHtml(id);updMo()}
+const trNow=km=>({km,price:null,label:zoneOf(km).l});
+
+function vp(inst){
+  const v=inst.vp;
+  if(v.statut==='attente')return{cls:'crit',l:'À vérifier : usage réglementé interdit',s:v.motif||'Vérification obligatoire avant remise en service'};
+  if(v.statut==='rouge')return{cls:'crit',l:'Vignette rouge : instrument refusé',s:'Remise en conformité puis nouvelle vérification'};
+  const d=until(v.echeance);
+  if(d<0)return{cls:'crit',l:'Vignette périmée depuis '+(-d)+' j',s:'Échéance dépassée le '+dLong(v.echeance)};
+  if(d<=45)return{cls:'warn',l:'Vérification dans '+d+' j',s:'Vignette verte valable jusqu’au '+dLong(v.echeance)};
+  return{cls:'ok',l:'Vignette verte',s:'Valable jusqu’au '+dLong(v.echeance)};
+}
+function createInt(o){
+  const iv={id:'INT-'+(db.seq++),type:o.type,clientId:o.clientId,instId:o.instId,statut:'a_faire',prio:o.prio||'normale',tech:null,recu:rel(0),duree:o.duree||'1 h',pers:o.pers||1,desc:o.desc||'',segs:[],journal:[],bon:null};
+  log(iv,'Demande créée');db.interventions.unshift(iv);return iv;
+}
+const myLive=()=>db.interventions.find(x=>x.statut==='en_cours'&&x.tech===db.settings.me&&running(x));
+const myOpen=()=>db.interventions.filter(x=>x.statut==='en_cours'&&x.tech===db.settings.me);
+
+/* ---------- Chrono ---------- */
+function canDo(iv){
+  const me=ME();
+  if(iv.type==='Vérification'&&!me.habil){toast(me.name+' n’est pas habilité aux vérifications');return false}
+  return true;
+}
+function startTimer(iv){
+  if(!canDo(iv))return;
+  const other=myLive();
+  if(other&&other.id!==iv.id){other.segs[other.segs.length-1].e=Date.now();log(other,'Chrono mis en pause (départ sur '+iv.id+')')}
+  const first=!iv.segs.length;
+  iv.tech=db.settings.me;iv.statut='en_cours';iv.segs.push({s:Date.now(),e:null});
+  log(iv,first?'Chrono démarré par '+ME().name:'Chrono repris');
+  save();refresh();toast(other&&other.id!==iv.id?other.id+' mise en pause, chrono lancé sur '+iv.id:'Chrono lancé');
+}
+function pauseTimer(iv){if(!running(iv))return;iv.segs[iv.segs.length-1].e=Date.now();log(iv,'Chrono mis en pause');save();refresh()}
+
+/* ---------- Vues principales ---------- */
+function ivCard(iv){
+  const c=C(iv.clientId),inst=I(iv.instId),t=iv.tech?TECH(iv.tech):null,live=iv.statut==='en_cours';
+  const meta=live?`<span class="tnum"><b data-tick="${iv.id}" data-k="clock">${clockStr(elapsed(iv))}</b>${t?' · '+esc(t.name):''}</span>`
+    :`<span class="tnum">${t?esc(t.name):'Reçue '+dShort(iv.recu)}</span>`;
+  return `<button class="card ${live&&running(iv)?'live':''}" type="button" data-act="open-int" data-id="${iv.id}">
+    <div class="row"><span class="mono muted">${iv.id}</span><span class="row" style="gap:6px">${urg(iv)}${pill(iv)}</span></div>
+    <div class="iv-title">${esc(c.name)}</div>
+    <div class="iv-sub">${iv.type} · ${esc(inst.kind)} ${esc(inst.portee)} · ${esc(iv.duree)} estimé</div>
+    <div class="row iv-meta">${meta}<span class="mono">${inst.id}</span></div>
+  </button>`;
+}
+function vInterventions(){
+  const all=db.interventions,me=db.settings.me;
+  const open=x=>!['terminee','facturee'].includes(x.statut);
+  const n={urg:all.filter(x=>x.prio==='urgente'&&open(x)).length,afa:all.filter(x=>x.statut==='a_faire').length,
+    enc:all.filter(x=>x.statut==='en_cours').length,fac:all.filter(x=>x.statut==='terminee').length};
+  const f=ui.filter;
+  let list=all.filter(x=>f==='all'?true:f==='mine'?(x.tech===me&&open(x)):f==='urg'?(x.prio==='urgente'&&open(x)):x.statut===f);
+  list=list.slice().sort((a,b)=>ORDER[a.statut]-ORDER[b.statut]||(b.prio==='urgente')-(a.prio==='urgente')||String(a.recu).localeCompare(String(b.recu)));
+  const chip=(k,l)=>`<button class="chip" type="button" data-act="filter" data-f="${k}" aria-pressed="${f===k}">${l}</button>`;
+  const cnt=(k,v,l,cls)=>`<button class="count ${cls||''}" type="button" data-act="filter" data-f="${k}" aria-pressed="${f===k}"><b class="tnum">${v}</b><span>${l}</span></button>`;
+  return `<div class="page">
+    <div><h1>Interventions</h1><p class="lede">${fHead.format(T0)} · choisis ton intervention et lance le chrono sur place</p></div>
+    <div class="counts">${cnt('urg',n.urg,'Urgentes',n.urg?'crit':'')}${cnt('a_faire',n.afa,'À faire')}${cnt('en_cours',n.enc,'En cours')}${cnt('terminee',n.fac,'À facturer')}</div>
+    <div class="sec">
+      <div class="chips">${chip('all','Toutes')}${chip('mine','Les miennes')}${chip('a_faire','À faire')}${chip('prise','Prises')}${chip('en_cours','En cours')}${chip('terminee','Terminées')}${chip('facturee','Facturées')}</div>
+      <div class="list">${list.length?list.map(ivCard).join(''):'<div class="empty">Aucune intervention dans ce filtre.</div>'}</div>
+    </div>
+    <p class="foot">Données fictives de démonstration, enregistrées sur ce téléphone.</p>
+  </div>`;
+}
+function instRow(inst,extra){
+  const c=C(inst.clientId),v=vp(inst);
+  return `<button class="card" type="button" data-act="open-inst" data-id="${inst.id}">
+    <div class="row"><span class="mono">${inst.id}</span><span class="pill" style="background:var(--${v.cls}-soft);color:var(--${v.cls})"><i class="dot ${v.cls}"></i>${esc(v.l)}</span></div>
+    <div class="iv-title">${esc(c.name)}</div>
+    <div class="iv-sub">${esc(inst.kind)} · ${esc(inst.portee)} · e = ${esc(inst.echelon)}</div>${extra||''}
+  </button>`;
+}
+function openVerifFor(id){return db.interventions.find(x=>x.instId===id&&x.type==='Vérification'&&['a_faire','prise','en_cours'].includes(x.statut))}
+function parcList(q){
+  q=(q||'').trim().toLowerCase();
+  const l=db.instruments.filter(i=>{const c=C(i.clientId);return !q||[i.id,i.serie,i.kind,i.marque,c.name].join(' ').toLowerCase().includes(q)});
+  return l.length?l.map(i=>instRow(i)).join(''):'<div class="empty">Aucun instrument ne correspond.</div>';
+}
+function vParc(){
+  const due=db.instruments.filter(i=>i.vp.statut!=='verte'||until(i.vp.echeance)<=45)
+    .sort((a,b)=>(a.vp.echeance?until(a.vp.echeance):-999)-(b.vp.echeance?until(b.vp.echeance):-999));
+  const dueHtml=due.map(i=>{const o=openVerifFor(i.id);
+    const extra=o?`<div class="iv-meta">Vérification déjà demandée · <span class="mono">${o.id}</span></div>`:`<div class="iv-meta"><span class="link" role="link" data-act="new-verif" data-id="${i.id}">Créer la demande de vérification</span></div>`;
+    return instRow(i,extra)}).join('');
+  return `<div class="page">
+    <div><h1>Parc instruments</h1><p class="lede">${db.instruments.length} instruments chez ${db.clients.length} clients</p></div>
+    <div class="sec"><h2>Échéances et alertes</h2><div class="list">${dueHtml||'<div class="empty">Aucune échéance dans les 45 jours.</div>'}</div></div>
+    <div class="sec"><h2>Tous les instruments</h2>
+      <label class="fld"><span>Rechercher un n° d’instrument, un client, un n° de série</span><input type="search" id="q" placeholder="Ex. : INS-0421 ou Ferrand" autocomplete="off"></label>
+      <div class="list" id="parc-list">${parcList('')}</div></div>
+  </div>`;
+}
+function vSettings(){
+  const s=db.settings;
+  const o=(v,l,cur)=>`<option value="${v}" ${Number(cur)===v?'selected':''}>${l}</option>`;
+  const ex=[20,40,50,80,100,140];
+  return `<div class="page">
+    <div><h1>Réglages</h1><p class="lede">Ces réglages servent au calcul de la main-d’œuvre sur les bons.</p></div>
+    <form class="stack" data-form="settings">
+      <label class="fld"><span>Je suis</span><select name="me" id="set-me">${db.techs.map(t=>`<option value="${t.id}" ${t.id===s.me?'selected':''}>${esc(t.name)} · ${esc(t.role)}${t.habil?' · habilité vérif.':''}</option>`).join('')}</select></label>
+      <label class="fld"><span>Taux horaire main-d’œuvre (€ HT)</span><input type="number" name="rate" id="set-rate" min="0" step="0.5" value="${s.rate}" inputmode="decimal"></label>
+      <fieldset><legend>Forfaits de déplacement (€ HT)</legend>
+        <div class="grid2"><label class="fld"><span>Jusqu’à ${s.dep.l1} km</span><input type="number" id="set-p1" min="0" value="${s.dep.p1}" inputmode="decimal"></label>
+          <label class="fld"><span>De ${s.dep.l1+1} à ${s.dep.l2} km</span><input type="number" id="set-p2" min="0" value="${s.dep.p2}" inputmode="decimal"></label>
+          <label class="fld"><span>Plus de ${s.dep.l2} km</span><input type="number" id="set-p3" min="0" value="${s.dep.p3}" inputmode="decimal"></label></div>
+        <div class="grid2"><label class="fld"><span>Limite zone 1 (km)</span><input type="number" id="set-l1" min="1" value="${s.dep.l1}" inputmode="numeric"></label>
+          <label class="fld"><span>Limite zone 2 (km)</span><input type="number" id="set-l2" min="1" value="${s.dep.l2}" inputmode="numeric"></label></div>
+        <p class="hint">Distance aller entre l’agence et le site, indiquée sur chaque fiche client. Tarifs d’exemple à ajuster.</p></fieldset>
+      <div class="card block"><b>Arrondi du temps facturé</b>
+        <dl class="money"><dt>De 0 à 45 min</dt><dd>30 min</dd><dt>De 46 min à 1 h 15</dt><dd>1 h</dd><dt>De 1 h 16 à 1 h 45</dt><dd>1 h 30</dd><dt>De 1 h 46 à 2 h 15</dt><dd>2 h</dd><dt>Et ainsi de suite</dt><dd>par demi-heure</dd></dl>
+        <p class="hint">Borne exacte vers le bas : pile 45 min = 30 min, pile 1 h 15 = 1 h.</p></div>
+      <div class="card block"><b>Exemples avec ces réglages</b>
+        <dl class="money">${ex.map(m=>{const b=billed(m);return `<dt>Chrono ${durStr(m)} → facturé ${durStr(b)}</dt><dd>${fEur.format(cost(b,s.rate))}</dd>`}).join('')}</dl>
+        <p class="hint">Le taux de 65 € est un exemple : mets le vrai tarif de l’agence.</p></div>
+    </form>
+    <div class="foot"><span>Démo : données fictives stockées sur ce téléphone uniquement.</span>
+      <button class="link" type="button" data-act="reset">${ui.resetArm?'Confirmer la réinitialisation':'Réinitialiser la démo'}</button></div>
+  </div>`;
+}
+
+/* ---------- Fiches ---------- */
+function clockBlock(iv,mine){
+  const on=running(iv),ms=elapsed(iv),r=db.settings.rate;
+  return `<div class="clock ${on?'on':''}">
+    <span class="lbl">${on?'Chrono en cours':'Chrono en pause'}${!mine&&iv.tech?' · '+esc(TECH(iv.tech).name):''}</span>
+    <span class="t" data-tick="${iv.id}" data-k="clock">${clockStr(ms)}</span>
+    <div class="cost"><span>Main-d’œuvre estimée<br><small data-tick="${iv.id}" data-k="billed">${durStr(billed(ms/MIN))} facturé · ${r} €/h</small></span><b data-tick="${iv.id}" data-k="cost">${fEur.format(cost(billed(ms/MIN),r))}</b></div>
+    ${mine?`<div class="clock-btns">${on?`<button class="btn" type="button" data-act="pause" data-id="${iv.id}">Pause</button>`:`<button class="btn" type="button" data-act="start" data-id="${iv.id}">Reprendre</button>`}
+      <button class="btn primary" type="button" data-act="finish" data-id="${iv.id}">Terminer et faire le bon</button></div>`:''}
+  </div>`;
+}
+function vIntDetail(iv){
+  const c=C(iv.clientId),inst=I(iv.instId),t=iv.tech?TECH(iv.tech):null,v=vp(inst),me=db.settings.me,mine=iv.tech===me;
+  let act='';
+  if(iv.statut==='a_faire')act=`<div class="actions"><button class="btn go block" type="button" data-act="start" data-id="${iv.id}">Commencer maintenant · lancer le chrono</button>
+    <button class="btn block" type="button" data-act="take" data-id="${iv.id}">Je la prends pour plus tard</button>
+    ${iv.type==='Vérification'?'<p class="hint">Vérification : réservée aux techniciens habilités.</p>':''}</div>`;
+  if(iv.statut==='prise')act=mine?`<div class="actions"><button class="btn go block" type="button" data-act="start" data-id="${iv.id}">Commencer · lancer le chrono</button>
+    <button class="btn block" type="button" data-act="release" data-id="${iv.id}">Je la libère</button></div>`
+    :`<div class="card block"><span>Prise par <b>${esc(t.name)}</b>.</span><button class="btn block" type="button" data-act="start" data-id="${iv.id}">La commencer à sa place</button></div>`;
+  if(iv.statut==='en_cours')act=clockBlock(iv,mine)+(!mine?'<p class="hint">Seul le technicien qui a lancé le chrono peut le mettre en pause ou terminer.</p>':'');
+  if(iv.statut==='terminee')act=`<div class="actions"><button class="btn primary block" type="button" data-act="view-bon" data-id="${iv.id}">Voir le bon ${iv.bon.numero} · ${fEur.format(bonTotal(iv.bon))} HT</button><button class="btn block" type="button" data-act="invoice" data-id="${iv.id}">Marquer comme facturée</button></div>`;
+  if(iv.statut==='facturee')act=`<button class="btn block" type="button" data-act="view-bon" data-id="${iv.id}">Voir le bon ${iv.bon.numero}</button>`;
+  return `<div class="page">
+    <div class="block"><div class="row"><span class="mono muted">${iv.id}</span><span class="row" style="gap:6px">${urg(iv)}${pill(iv)}</span></div>
+      <h1>${iv.type} · ${esc(c.name)}</h1>
+      <p class="desc">${esc(iv.desc)}</p>
+      <p class="hint tnum">Reçue ${dShort(iv.recu)} · durée estimée ${esc(iv.duree)} · ${iv.pers} personne${iv.pers>1?'s':''}${t?' · '+esc(t.name):''}</p></div>
+    ${act}
+    <div class="sec"><h2>Client</h2><div class="card block">
+      <b>${esc(c.name)}</b><span class="iv-sub">${esc(c.site)} · ${esc(c.addr)}</span>
+      <span class="iv-sub tnum">${c.dist||0} km de l’agence · déplacement ${fEur.format(travel(trNow(c.dist||0)))} HT</span>
+      <span class="iv-sub" style="user-select:text">${esc(c.contact)}</span>
+      ${c.note?`<span class="hint ${c.critique?'warn':''}">${esc(c.note)}</span>`:''}</div></div>
+    <div class="sec"><h2>Instrument</h2>
+      <button class="card block" type="button" data-act="open-inst" data-id="${inst.id}" style="text-align:left">
+        <div class="row"><span class="mono">${inst.id}</span><span class="link">Fiche et historique ›</span></div>
+        <span>${esc(inst.kind)} ${esc(inst.marque)} ${esc(inst.modele)} · ${esc(inst.portee)} · e = ${esc(inst.echelon)}</span></button>
+      <div class="vig ${v.cls}"><div>${esc(v.l)}<small>${esc(v.s)}</small></div></div></div>
+    <div class="sec"><h2>Journal</h2><ul class="journal">${iv.journal.slice().reverse().map(e=>`<li><time>${dShort(e.d)} ${e.h}</time><span>${esc(e.t)}</span></li>`).join('')}</ul></div>
+  </div>`;
+}
+function thumbs(id){return (ui.photos[id]||[]).map(u=>`<img src="${u}" alt="Photo jointe">`).join('')}
+function vBonForm(iv){
+  const c=C(iv.clientId),inst=I(iv.instId),t=TECH(iv.tech),mesure=Math.round(elapsed(iv)/MIN),r=db.settings.rate;
+  ui.lines[iv.id]=ui.lines[iv.id]||[];
+  const metro=iv.type!=='Vérification';
+  return `<form data-form="bon" data-id="${iv.id}" class="stack" novalidate>
+    <div class="card block"><div class="row"><b>${esc(c.name)}</b><span class="mono">${inst.id}</span></div>
+      <span class="iv-sub">${iv.type} · ${esc(inst.kind)} ${esc(inst.portee)} · ${t?esc(t.name):''}</span></div>
+    <fieldset><legend>Main-d’œuvre et déplacement</legend>
+      <label class="fld"><span>Distance agence → site (km, aller)</span><input type="number" min="0" name="km" id="bon-km" value="${c.dist||0}" inputmode="numeric"></label>
+      <dl class="money" id="mo">${moRows(mesure,null,r,trNow(c.dist||0),ui.lines[iv.id])}</dl>
+      <label class="check"><input type="checkbox" id="bon-corr" name="corr"><span>Corriger le temps (chrono oublié, pause non prise…)</span></label>
+      <div class="stack" id="corr-box" hidden>
+        <label class="fld"><span>Temps réel (minutes)</span><input type="number" min="1" name="corrMin" id="bon-corr-min" value="${mesure||1}" inputmode="numeric"></label>
+        <label class="fld"><span>Motif de la correction</span><input name="corrMotif" id="bon-corr-motif" placeholder="Ex. : oublié de lancer le chrono en arrivant"></label>
+        <p class="hint">La correction et son motif apparaissent sur le bon et dans le journal.</p></div>
+      <p class="hint">Calcul : ${ruleTxt()}, taux ${num(r)} € HT/h. Déplacement : forfait selon la distance (${fEur.format(db.settings.dep.p1)} / ${fEur.format(db.settings.dep.p2)} / ${fEur.format(db.settings.dep.p3)}).</p></fieldset>
+    <label class="fld"><span>Travaux réalisés</span><textarea name="travaux" id="bon-travaux" rows="4" placeholder="Ex. : remplacement du câble du capteur n° 3, contrôle des connexions"></textarea></label>
+    <fieldset><legend>Pièces et petit matériel</legend>
+      <div id="lines">${linesHtml(iv.id)}</div>
+      <div class="addrow"><select id="add-ref" aria-label="Pièce du catalogue">${db.catalogue.map(a=>`<option value="${a.code}">Code ${a.code} · ${esc(a.des)} · ${fEur.format(a.pu)}</option>`).join('')}</select><button type="button" class="btn" data-act="add-ref" data-id="${iv.id}">Ajouter</button></div>
+      <div class="row" style="justify-content:flex-start;gap:18px;flex-wrap:wrap"><button type="button" class="link" data-act="add-petit" data-id="${iv.id}">+ Petit matériel (prix libre)</button><button type="button" class="link" data-act="add-conso" data-id="${iv.id}">+ Forfait consommables 15 €</button></div>
+      <p class="hint">Les pièces viennent du catalogue (fichier de références, ici 3 codes fictifs). Le petit matériel se facture au prix que tu choisis.</p></fieldset>
+    ${metro?`<fieldset><legend>Métrologie</legend>
+      <label class="check"><input type="checkbox" name="metro" id="bon-metro"><span>L’intervention touche la chaîne de mesure (capteur, câble de mesure, réglage, scellé brisé)</span></label>
+      <p class="hint warn" id="metro-hint" hidden>Vérification obligatoire avant remise en service. L’instrument passera en « À vérifier » et une demande de vérification sera créée automatiquement.</p></fieldset>`
+    :`<fieldset><legend>Résultat de la vérification</legend>
+      <div class="seg"><label><input type="radio" name="resultat" value="conforme" id="bon-conf">Conforme</label><label><input type="radio" name="resultat" value="non" id="bon-nonconf">Non conforme</label></div>
+      <label class="fld" id="ech-fld"><span>Prochaine échéance (vignette verte)</span><input type="date" name="echeance" id="bon-ech" value="${rel(365)}"></label>
+      <p class="hint" id="ech-hint">Selon la périodicité réglementaire de l’instrument.</p></fieldset>`}
+    <div class="fld"><span>Photos</span><label class="btn small file">Ajouter des photos<input type="file" accept="image/*" capture="environment" multiple id="bon-photos" data-id="${iv.id}"></label><div class="thumbs" id="thumbs">${thumbs(iv.id)}</div></div>
+    <label class="fld"><span>Nom du signataire (client)</span><input name="signataire" id="bon-sig-name" autocomplete="off" placeholder="Nom et fonction"></label>
+    <div class="fld"><span>Signature du client</span><canvas id="sig" class="sig" aria-label="Zone de signature, signer avec le doigt"></canvas>
+      <button type="button" class="link" data-act="sig-clear">Effacer la signature</button></div>
+    <p class="err" id="bon-err" hidden></p>
+    <p class="hint">${ui.offline?'Hors ligne : le bon sera gardé sur le téléphone et envoyé dès le retour du réseau.':'Après signature, le bon est verrouillé et ne peut plus être modifié.'}</p>
+    <button class="btn primary block" type="submit">Valider le bon signé</button></form>`;
+}
+function moRows(mesure,corr,r,tr,lines){
+  const base=corr!=null?corr:mesure,b=billed(base),mo=cost(b,r);
+  let out=`<dt>Chrono</dt><dd>${durStr(mesure)}</dd>
+    ${corr!=null?`<dt>Temps corrigé</dt><dd>${durStr(corr)}</dd>`:''}
+    <dt>Temps facturé</dt><dd>${durStr(b)}</dd>`;
+  if(!tr)return out+`<dt>${num((b/60).toFixed(2))} h × ${num(r)} €</dt><dd></dd><dt class="tot">Main-d’œuvre HT</dt><dd class="tot">${fEur.format(mo)}</dd>`;
+  const d=travel(tr);
+  return out+`<dt>Main-d’œuvre : ${num((b/60).toFixed(2))} h × ${num(r)} €</dt><dd>${fEur.format(mo)}</dd>
+    <dt>Déplacement : forfait ${tr.label} (${tr.km} km)</dt><dd>${fEur.format(d)}</dd>
+    ${lineRows(lines)}<dt class="tot">Total HT</dt><dd class="tot">${fEur.format(mo+d+linesTot(lines))}</dd>`;
+}
+function vBon(iv){
+  const b=iv.bon,c=C(iv.clientId),inst=I(iv.instId),t=TECH(b.tech);
+  const res=b.resultat==='conforme'?'Conforme · vignette verte jusqu’au '+dLong(b.echeance):b.resultat==='non'?'Non conforme · vignette rouge':null;
+  return `<div class="page">
+    <div class="row"><span class="stamp" style="color:var(--ok)">Signé et verrouillé</span><span class="hint">${b.synced?'Envoyé':'En attente d’envoi'}</span></div>
+    <div class="paper">
+      <div class="row"><h3>Bon d’intervention</h3><span class="mono">${b.numero}</span></div>
+      <hr>
+      <dl class="dl"><dt>Date</dt><dd class="tnum">${dLong(b.date)} · ${b.heure}</dd>
+        <dt>Client</dt><dd>${esc(c.name)}, ${esc(c.site)}</dd>
+        <dt>Instrument</dt><dd>${inst.id} · ${esc(inst.kind)} ${esc(inst.marque)} ${esc(inst.modele)} · n° ${esc(inst.serie)}</dd>
+        <dt>Nature</dt><dd>${iv.type}</dd>
+        <dt>Technicien</dt><dd>${t?esc(t.name):''}</dd></dl>
+      <hr>
+      <dl class="dl"><dt>Travaux</dt><dd>${esc(b.travaux)}</dd>
+        ${b.pieces?`<dt>Pièces</dt><dd>${esc(b.pieces)}</dd>`:''}
+        ${iv.type!=='Vérification'?`<dt>Métrologie</dt><dd>${b.metro?'Chaîne de mesure touchée : vérification obligatoire avant remise en service':'Chaîne de mesure non touchée'}</dd>`:''}
+        ${res?`<dt>Résultat</dt><dd>${res}</dd>`:''}
+        <dt>Photos</dt><dd>${b.photos||0}</dd></dl>
+      <hr>
+      <dl class="money">${moRows(b.mesure,b.correction?b.correction.min:null,b.rate,{km:b.km,price:b.dep||0,label:b.depL||''},b.lines)}</dl>
+      ${b.correction?`<p class="hint">Temps corrigé par le technicien : ${esc(b.correction.motif)}</p>`:''}
+      <hr>
+      <div class="block"><span class="hint">Signature du client : ${esc(b.signataire)}</span>
+        ${b.sig?`<img class="signature" src="${b.sig}" alt="Signature du client">`:'<span class="hint">Signature enregistrée</span>'}</div>
+    </div>
+    <p class="hint">Dans la version connectée, ce bon part en PDF au client et le montant de main-d’œuvre arrive tout prêt à la gestionnaire pour la facture.</p>
+  </div>`;
+}
+function vInst(inst){
+  const c=C(inst.clientId),v=vp(inst);
+  const hist=db.interventions.filter(x=>x.instId===inst.id).sort((a,b)=>String(b.recu).localeCompare(String(a.recu)));
+  return `<div class="page">
+    <div class="block"><span class="mono muted">${inst.id}</span><h1>${esc(inst.kind)}</h1><span class="iv-sub">${esc(c.name)} · ${esc(inst.empl)}</span></div>
+    <div class="vig ${v.cls}"><div>${esc(v.l)}<small>${esc(v.s)}</small></div></div>
+    <div class="card"><dl class="dl">
+      <dt>Marque</dt><dd>${esc(inst.marque)}</dd><dt>Modèle</dt><dd>${esc(inst.modele)}</dd>
+      <dt>N° de série</dt><dd class="mono">${esc(inst.serie)}</dd><dt>Portée max</dt><dd>${esc(inst.portee)}</dd>
+      <dt>Échelon</dt><dd>e = ${esc(inst.echelon)}</dd><dt>Millésime</dt><dd class="tnum">${inst.mill}</dd>
+      <dt>Emplacement</dt><dd>${esc(inst.empl)}</dd></dl></div>
+    <button class="btn primary block" type="button" data-act="new" data-inst="${inst.id}">Créer une demande pour cet instrument</button>
+    <div class="sec"><h2>Historique (${hist.length})</h2><div class="list">${hist.length?hist.map(ivCard).join(''):'<div class="empty">Aucune intervention enregistrée.</div>'}</div></div>
+  </div>`;
+}
+function instOptions(cid,sel){return db.instruments.filter(i=>i.clientId===cid).map(i=>`<option value="${i.id}" ${i.id===sel?'selected':''}>${i.id} · ${esc(i.kind)} ${esc(i.portee)}</option>`).join('')}
+function vNew(pre){
+  const inst=pre?I(pre):null,cid=inst?inst.clientId:db.clients[0].id,c=C(cid);
+  return `<form data-form="new" class="stack">
+    <label class="fld"><span>Client</span><select name="client" id="new-client">${db.clients.map(x=>`<option value="${x.id}" ${x.id===cid?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+    <label class="fld"><span>Instrument</span><select name="inst" id="new-inst">${instOptions(cid,pre)}</select></label>
+    <label class="fld"><span>Type</span><select name="type" id="new-type"><option>Réparation</option><option>Vérification</option><option>Installation</option></select></label>
+    <fieldset><legend>Priorité</legend><div class="seg">
+      <label><input type="radio" name="prio" value="normale" id="new-p-n" ${c.critique?'':'checked'}>Normale</label>
+      <label><input type="radio" name="prio" value="urgente" id="new-p-u" ${c.critique?'checked':''}>Urgente</label></div>
+      <p class="hint warn" id="new-crit" ${c.critique?'':'hidden'}>${esc(c.note||'Client critique')}</p></fieldset>
+    <label class="fld"><span>Description de la demande</span><textarea name="desc" id="new-desc" rows="3" placeholder="Ce que le client signale"></textarea></label>
+    <div class="grid2"><label class="fld"><span>Durée estimée</span><select name="duree" id="new-duree"><option>30 min</option><option selected>1 h</option><option>2 h</option><option>Demi-journée</option><option>1 jour</option><option>2 jours</option></select></label>
+      <label class="fld"><span>Personnes</span><select name="pers" id="new-pers"><option>1</option><option>2</option><option>3</option></select></label></div>
+    <button class="btn primary block" type="submit">Créer la demande</button></form>`;
+}
+
+/* ---------- Rendu ---------- */
+const sheetEl=document.getElementById('sheet');
+function hdr(){
+  const s=document.getElementById('sync');
+  s.className='sync'+(ui.offline?' off':'');
+  s.innerHTML=`<i></i>${ui.offline?'Hors ligne'+(ui.pending?' · '+ui.pending+' en attente':''):'En ligne'}`;
+  s.title='Simuler une perte de réseau (démo)';
+  document.getElementById('who').textContent=ME().name+' · démo';
+}
+function runbar(){
+  const el=document.getElementById('runbar');
+  const iv=myLive()||myOpen()[0];
+  const top=ui.stack[ui.stack.length-1];
+  const hide=!iv||(top&&top.k==='bonform');
+  el.hidden=hide;document.body.classList.toggle('has-run',!hide);
+  if(hide)return;
+  const on=running(iv),c=C(iv.clientId);
+  el.style.background=on?'':'var(--ink)';el.style.color=on?'':'var(--bg)';
+  el.innerHTML=`<div class="runbar-in"><button class="open" type="button" data-act="open-int" data-id="${iv.id}"><span>${on?'En cours':'En pause'} · ${esc(c.name)} · ${iv.id}</span><b><span data-tick="${iv.id}" data-k="clock">${clockStr(elapsed(iv))}</span> · <span data-tick="${iv.id}" data-k="cost">${fEur.format(cost(billed(elapsed(iv)/MIN),db.settings.rate))}</span></b></button>
+    <button class="pp" type="button" data-act="${on?'pause':'start'}" data-id="${iv.id}">${on?'Pause':'Reprendre'}</button></div>`;
+}
+function render(){
+  hdr();
+  const m=document.getElementById('main');
+  m.innerHTML=ui.tab==='int'?vInterventions():ui.tab==='parc'?vParc():vSettings();
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',t.dataset.tab===ui.tab?'page':'false'));
+  runbar();
+}
+function renderSheet(){
+  const top=ui.stack[ui.stack.length-1];
+  if(!top){sheetEl.hidden=true;document.body.classList.remove('locked');runbar();return}
+  let title='',html='';
+  if(top.k==='int'){const iv=INT(top.id);title=iv.id;html=vIntDetail(iv)}
+  else if(top.k==='inst'){const i=I(top.id);title=i.id;html=vInst(i)}
+  else if(top.k==='bonform'){title='Bon d’intervention';html=vBonForm(INT(top.id))}
+  else if(top.k==='bon'){const iv=INT(top.id);title=iv.bon.numero;html=vBon(iv)}
+  else if(top.k==='new'){title='Nouvelle demande';html=vNew(top.inst)}
+  document.getElementById('sheetTitle').textContent=title;
+  document.getElementById('sheetBody').innerHTML=html;
+  sheetEl.hidden=false;document.body.classList.add('locked');
+  runbar();
+  if(top.k==='bonform')requestAnimationFrame(setupSig);
+}
+function refresh(){const top=ui.stack[ui.stack.length-1];if(top&&top.k!=='bonform')renderSheet();render()}
+function push(x){ui.stack.push(x);renderSheet();document.getElementById('sheetScroll').scrollTop=0}
+function pop(){ui.stack.pop();renderSheet();render()}
+let tt;
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{el.hidden=true},3400)}
+
+/* Mise à jour des chronos chaque seconde, sans redessiner les formulaires */
+setInterval(()=>{
+  document.querySelectorAll('[data-tick]').forEach(el=>{
+    const iv=INT(el.dataset.tick);if(!iv||!running(iv))return;
+    const ms=elapsed(iv),k=el.dataset.k;
+    if(k==='clock')el.textContent=clockStr(ms);
+    else if(k==='cost')el.textContent=fEur.format(cost(billed(ms/MIN),db.settings.rate));
+    else if(k==='billed')el.textContent=durStr(billed(ms/MIN))+' facturé · '+db.settings.rate+' €/h';
+  });
+},1000);
+
+function setupSig(){
+  const c=document.getElementById('sig');if(!c)return;
+  const r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  c.width=Math.max(1,Math.round(r.width*dpr));c.height=Math.max(1,Math.round(r.height*dpr));
+  const x=c.getContext('2d');x.scale(dpr,dpr);x.lineWidth=2.2;x.lineCap='round';x.lineJoin='round';
+  x.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--paper-ink').trim()||'#15201D';
+  sig={has:false,c};let drawing=false;
+  const pt=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  c.onpointerdown=e=>{drawing=true;try{c.setPointerCapture(e.pointerId)}catch(_){}const p=pt(e);x.beginPath();x.moveTo(p[0],p[1]);x.lineTo(p[0]+.1,p[1]+.1);x.stroke();sig.has=true};
+  c.onpointermove=e=>{if(!drawing)return;const p=pt(e);x.lineTo(p[0],p[1]);x.stroke()};
+  c.onpointerup=c.onpointercancel=()=>{drawing=false};
+}
+function updMo(){
+  const f=document.querySelector('form[data-form="bon"]');if(!f)return;
+  const iv=INT(f.dataset.id),mesure=Math.round(elapsed(iv)/MIN);
+  const corr=f.corr.checked?Math.max(1,Number(f.corrMin.value)||0):null;
+  document.getElementById('mo').innerHTML=moRows(mesure,corr,db.settings.rate,trNow(Math.max(0,Number(f.km.value)||0)),ui.lines[iv.id]);
+}
+
+/* ---------- Actions ---------- */
+const acts={
+  tab:d=>{ui.tab=d.tab;ui.stack=[];ui.resetArm=false;renderSheet();render();window.scrollTo(0,0)},
+  filter:d=>{ui.filter=ui.filter===d.f&&d.f!=='all'?'all':d.f;render()},
+  'open-int':d=>{const top=ui.stack[ui.stack.length-1];if(top&&top.k==='int'&&top.id===d.id)return;push({k:'int',id:d.id})},
+  'open-inst':d=>push({k:'inst',id:d.id}),
+  back:()=>pop(),
+  new:d=>push({k:'new',inst:d.inst||null}),
+  take:d=>{const iv=INT(d.id);if(!canDo(iv))return;iv.tech=db.settings.me;iv.statut='prise';log(iv,'Prise par '+ME().name);save();refresh();toast(iv.id+' ajoutée à tes interventions')},
+  release:d=>{const iv=INT(d.id);iv.tech=null;iv.statut='a_faire';log(iv,'Libérée par '+ME().name);save();refresh();toast(iv.id+' remise dans « À faire »')},
+  start:d=>startTimer(INT(d.id)),
+  pause:d=>{pauseTimer(INT(d.id));toast('Chrono en pause')},
+  finish:d=>{const iv=INT(d.id);if(running(iv)){iv.segs[iv.segs.length-1].e=Date.now();log(iv,'Chrono arrêté ('+durStr(elapsed(iv)/MIN)+')')}save();push({k:'bonform',id:iv.id});render()},
+  'view-bon':d=>push({k:'bon',id:d.id}),
+  'add-ref':d=>{const a=db.catalogue.find(x=>x.code===document.getElementById('add-ref').value);if(!a)return;const L=ui.lines[d.id];const ex=L.find(l=>l.kind==='ref'&&l.code===a.code);if(ex)ex.qty=(Number(ex.qty)||0)+1;else L.push({kind:'ref',code:a.code,des:a.des,qty:1,pu:a.pu});drawLines(d.id)},
+  'add-petit':d=>{ui.lines[d.id].push({kind:'petit',des:'',qty:1,pu:0});drawLines(d.id);const n=ui.lines[d.id].length-1,el=document.getElementById('ln-des-'+n);if(el)el.focus()},
+  'add-conso':d=>{ui.lines[d.id].push({kind:'petit',des:'Forfait consommables',qty:1,pu:15});drawLines(d.id)},
+  'del-line':d=>{ui.lines[d.id].splice(Number(d.i),1);drawLines(d.id)},
+  invoice:d=>{const iv=INT(d.id);iv.statut='facturee';log(iv,'Marquée facturée');save();refresh();toast(iv.id+' marquée facturée')},
+  'sig-clear':()=>{const c=sig.c;if(!c)return;c.getContext('2d').clearRect(0,0,c.width,c.height);sig.has=false},
+  'toggle-offline':()=>{
+    if(ui.offline){ui.offline=false;const n=ui.pending;ui.pending=0;db.interventions.forEach(x=>{if(x.bon)x.bon.synced=true});save();hdr();toast(n?n+' bon'+(n>1?'s':'')+' synchronisé'+(n>1?'s':''):'Réseau retrouvé')}
+    else{ui.offline=true;hdr();toast('Hors ligne simulé : le chrono et les bons continuent sur le téléphone')}
+    const top=ui.stack[ui.stack.length-1];if(top&&top.k==='bon')renderSheet();
+  },
+  'new-verif':d=>{const inst=I(d.id);const iv=createInt({type:'Vérification',clientId:inst.clientId,instId:inst.id,prio:inst.vp.statut==='verte'&&until(inst.vp.echeance)>=0?'normale':'urgente',desc:'Vérification périodique : échéance '+(inst.vp.echeance?dLong(inst.vp.echeance):'à définir')+'.'});save();render();toast(iv.id+' créée dans « À faire »')},
+  reset:()=>{if(!ui.resetArm){ui.resetArm=true;render();return}db=seed();ui.resetArm=false;ui.photos={};ui.pending=0;ui.filter='all';save();render();toast('Démo réinitialisée')}
+};
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  if(b.dataset.act==='new-verif')e.stopPropagation();
+  const f=acts[b.dataset.act];if(f){e.preventDefault();f(b.dataset,b)}
+},true);
+
+const forms={
+  new:f=>{const fd=new FormData(f);const iv=createInt({type:fd.get('type'),clientId:fd.get('client'),instId:fd.get('inst'),prio:fd.get('prio'),desc:(fd.get('desc')||'').trim()||'Demande sans description.',duree:fd.get('duree'),pers:Number(fd.get('pers'))});
+    save();ui.stack=[{k:'int',id:iv.id}];renderSheet();render();toast(iv.id+' créée dans « À faire »')},
+  settings:()=>{},
+  bon:f=>{
+    const iv=INT(f.dataset.id),inst=I(iv.instId),c=C(iv.clientId),fd=new FormData(f);
+    const travaux=(fd.get('travaux')||'').trim(),signataire=(fd.get('signataire')||'').trim(),err=[];
+    const mesure=Math.round(elapsed(iv)/MIN);
+    let correction=null;
+    if(f.corr.checked){const m=Math.round(Number(fd.get('corrMin'))||0),mo=(fd.get('corrMotif')||'').trim();
+      if(m<1)err.push('indique le temps réel');if(!mo)err.push('indique le motif de la correction');correction={min:m,motif:mo}}
+    const L=(ui.lines[iv.id]||[]).filter(l=>Number(l.qty)>0).map(l=>({...l,des:String(l.des||'').trim()}));
+    if(L.some(l=>l.kind==='petit'&&!l.des))err.push('donne une désignation au petit matériel');
+    if(!travaux)err.push('décris les travaux réalisés');
+    if(iv.type==='Vérification'&&!fd.get('resultat'))err.push('indique le résultat');
+    if(!signataire)err.push('indique le nom du signataire');
+    if(!sig.has)err.push('fais signer le client');
+    const eb=document.getElementById('bon-err');
+    if(err.length){eb.textContent='Avant de valider : '+err.join(', ')+'.';eb.hidden=false;eb.scrollIntoView({block:'center'});return}
+    if(running(iv))iv.segs[iv.segs.length-1].e=Date.now();
+    const now=new Date();
+    const bon={numero:'BI-'+T0.getFullYear()+'-'+String(db.bonSeq++).padStart(4,'0'),date:iso(now),heure:hm(now),tech:iv.tech,travaux,
+      mesure,facture:billed(correction?correction.min:mesure),rate:db.settings.rate,correction,
+      km:Number(fd.get('km')||0),dep:zoneOf(Number(fd.get('km')||0)).p,depL:zoneOf(Number(fd.get('km')||0)).l,pieces:'',lines:L,metro:fd.get('metro')==='on',
+      resultat:fd.get('resultat')||null,echeance:fd.get('echeance')||null,signataire,sig:sig.c.toDataURL('image/png'),photos:(ui.photos[iv.id]||[]).length,synced:!ui.offline};
+    iv.bon=bon;iv.statut='terminee';
+    if(correction)log(iv,'Temps corrigé de '+durStr(mesure)+' à '+durStr(correction.min)+' : '+correction.motif);
+    log(iv,'Bon '+bon.numero+' signé par '+signataire+' · total '+fEur.format(bonTotal(bon))+' HT');
+    let msg='Bon '+bon.numero+' validé';
+    if(iv.type==='Vérification'){
+      if(bon.resultat==='conforme'){inst.vp={statut:'verte',echeance:bon.echeance||rel(365)};log(iv,'Vignette verte posée')}
+      else{inst.vp={statut:'rouge',echeance:inst.vp.echeance};const n=createInt({type:'Réparation',clientId:c.id,instId:inst.id,prio:c.critique?'urgente':'normale',desc:'Remise en conformité après refus en vérification ('+bon.numero+').'});log(iv,'Vignette rouge posée, '+n.id+' créée');msg+=' · remise en conformité '+n.id+' créée'}
+    }else if(bon.metro){
+      const prim=iv.type==='Installation';
+      inst.vp={statut:'attente',echeance:inst.vp.echeance,motif:prim?'Vérification primitive à réaliser':'Vérification après réparation à réaliser'};
+      const n=createInt({type:'Vérification',clientId:c.id,instId:inst.id,prio:c.critique?'urgente':'normale',desc:(prim?'Vérification primitive':'Vérification après réparation')+' suite au bon '+bon.numero+'.'});
+      log(iv,'Instrument passé « À vérifier », '+n.id+' créée');msg+=' · vérification '+n.id+' créée';
+    }
+    if(ui.offline)ui.pending++;
+    save();ui.stack[ui.stack.length-1]={k:'bon',id:iv.id};renderSheet();render();toast(msg);
+  }
+};
+document.addEventListener('submit',e=>{const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();const h=forms[f.dataset.form];if(h)h(f)});
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='bon-metro')document.getElementById('metro-hint').hidden=!t.checked;
+  if(t.id==='bon-corr'){document.getElementById('corr-box').hidden=!t.checked;updMo()}
+  if(t.name==='resultat'){const non=t.value==='non';document.getElementById('ech-fld').hidden=non;document.getElementById('ech-hint').hidden=non}
+  if(t.id==='new-client'){const c=C(t.value);document.getElementById('new-inst').innerHTML=instOptions(c.id);
+    const h=document.getElementById('new-crit');h.hidden=!c.critique;h.textContent=c.note||'Client critique';
+    document.getElementById(c.critique?'new-p-u':'new-p-n').checked=true}
+  if(t.id==='bon-photos'){const id=t.dataset.id;ui.photos[id]=ui.photos[id]||[];
+    Array.from(t.files||[]).forEach(f=>{try{ui.photos[id].push(URL.createObjectURL(f))}catch(_){}});
+    document.getElementById('thumbs').innerHTML=thumbs(id);t.value=''}
+  if(t.closest&&t.closest('form[data-form="settings"]')){
+    const s=db.settings;
+    if(t.id==='set-me'){s.me=t.value;ui.filter='all'}
+    if(t.id==='set-rate')s.rate=Math.max(0,Number(t.value)||0);
+    if(/^set-[pl][123]$/.test(t.id)){const k=t.id.slice(4);s.dep[k]=Math.max(0,Number(t.value)||0);if(s.dep.l2<s.dep.l1)s.dep.l2=s.dep.l1}
+    if(t.id==='set-round')s.round=Number(t.value);
+    if(t.id==='set-min')s.minimum=Number(t.value);
+    save();render();toast('Réglage enregistré');
+  }
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='q')document.getElementById('parc-list').innerHTML=parcList(e.target.value);
+  if(e.target.id==='bon-corr-min'||e.target.id==='bon-km')updMo();
+  const el=e.target;
+  if(el.dataset&&el.dataset.line!==undefined){const f=el.closest('form[data-form="bon"]');if(!f)return;const l=(ui.lines[f.dataset.id]||[])[Number(el.dataset.line)];if(!l)return;const k=el.dataset.f;l[k]=k==='des'?el.value:Math.max(0,Number(el.value)||0);updMo()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.stack.length)pop()});
+
+render();
+})();
+</script>

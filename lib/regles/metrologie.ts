@@ -110,6 +110,7 @@ export function consequencesBon(
   clientCritique: boolean,
 ): ConsequencesBon {
   const priorite: Priorite = clientCritique ? "urgente" : "normale";
+  const motifAVerifier = type === "installation" ? "Vérification primitive" : "Vérification après réparation";
   const misesAJour: MiseAJourInstrument[] = [];
   const aVerifier: string[] = [];
   const aRemettreEnConformite: string[] = [];
@@ -126,8 +127,7 @@ export function consequencesBon(
         throw new Error(`Résultat de vérification manquant pour ${i.instrumentId}`);
       }
     } else if (i.chaineMesureTouchee) {
-      const motif = type === "installation" ? "Vérification primitive" : "Vérification après réparation";
-      misesAJour.push({ instrumentId: i.instrumentId, statut: "a_verifier", motif });
+      misesAJour.push({ instrumentId: i.instrumentId, statut: "a_verifier", motif: motifAVerifier });
       aVerifier.push(i.instrumentId);
     }
   }
@@ -136,7 +136,7 @@ export function consequencesBon(
   if (aVerifier.length > 0) {
     interventionsACreer.push({
       type: "verification",
-      description: type === "installation" ? "Vérification primitive" : "Vérification après réparation",
+      description: motifAVerifier,
       priorite,
       instrumentIds: aVerifier,
     });

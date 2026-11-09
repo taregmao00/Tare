@@ -338,7 +338,8 @@ create table public.ligne_bon (
   nature text not null check (nature in ('catalogue', 'petit_materiel')),
   code_article text,
   designation text not null check (length(btrim(designation)) > 0),
-  quantite numeric(12, 3) not null check (quantite > 0),
+  -- Pas de « numeric(12, 3) » : il arrondirait en silence 2,5555 en 2,556 ; ici, la base refuse.
+  quantite numeric not null check (quantite > 0 and quantite < 1000000 and scale(quantite) <= 3),
   prix_unitaire_ht_centimes integer not null check (prix_unitaire_ht_centimes >= 0),
 
   constraint ligne_bon_meme_entreprise
@@ -478,9 +479,12 @@ create trigger bon_verrouille
   for each row execute function public.verrou_bon();
 
 -- Retirer un instrument d'une intervention n'est possible qu'avant la signature du bon (§6.9).
+-- « security definer » : le contrôle voit tous les bons, quels que soient les droits de lecture
+-- de la personne qui retire l'instrument (sinon un bon invisible pour elle laisserait passer).
 create function public.verrou_retrait_instrument()
 returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 begin

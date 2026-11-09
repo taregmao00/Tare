@@ -79,6 +79,10 @@ insert into bon_instrument values
 insert into ligne_bon (entreprise_id, bon_id, nature, code_article, designation, quantite, prix_unitaire_ht_centimes) values
  ('e0000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-000000000001','catalogue','1','Câble de capteur blindé 4 fils (le mètre)',2.5,450);
 
+select pg_temp.doit_echouer('quantité à 4 décimales (2,5555)',
+ $q$insert into ligne_bon (entreprise_id, bon_id, nature, designation, quantite, prix_unitaire_ht_centimes) values ('e0000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-000000000001','petit_materiel','Gaine',2.5555,100)$q$);
+select pg_temp.doit_passer('quantité à 3 décimales (2,555)',
+ $q$insert into ligne_bon (entreprise_id, bon_id, nature, designation, quantite, prix_unitaire_ht_centimes) values ('e0000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-000000000001','petit_materiel','Gaine',2.555,100)$q$);
 select pg_temp.doit_echouer('conforme sans nouvelle échéance',
  $q$insert into bon_instrument values ('b0000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000900','e0000000-0000-0000-0000-000000000001',null,'conforme',null,null)$q$);
 select pg_temp.doit_echouer('modifier les travaux d''un bon signé', $q$update bon set travaux_realises='autre'$q$);
@@ -106,6 +110,16 @@ select pg_temp.doit_echouer('alerte liée à rien',
 select pg_temp.doit_echouer('intervention facturée sans auteur',
  $q$update intervention set statut='facturee', facturee_le=now() where numero='INT-0001'$q$);
 
+-- Le verrou de retrait ne doit pas dépendre des droits de lecture de la personne.
+grant select, delete on intervention_instrument to authenticated;
+create policy essai_retrait on intervention_instrument for all to authenticated using (true);
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a1';
+select pg_temp.doit_echouer('retirer un instrument après signature, depuis l''appli (bons non lisibles)',
+ $q$delete from intervention_instrument where instrument_id='10000000-0000-0000-0000-000000000803'$q$);
+reset role;
+drop policy essai_retrait on intervention_instrument;
+revoke select, delete on intervention_instrument from authenticated;
 set role authenticated;
 set request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a1';
 select pg_temp.doit_echouer('lecture des interventions depuis l''appli (pas encore de règle RLS)', $q$select * from intervention$q$);

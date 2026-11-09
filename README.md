@@ -17,3 +17,4 @@ Le cahier des charges complet est dans [CLAUDE.md](CLAUDE.md) ; `prototype.html`
 - Projet de développement : `tare-dev` (données fictives uniquement).
 - Variables d'environnement : voir `.env.example` (à copier en `.env.local`, et à renseigner dans Vercel).
 - Les changements de base sont des fichiers versionnés dans `supabase/migrations/`, appliqués dans l'ordre de leur nom.
+- `supabase/tests/` : essais des verrous de la base, à lancer sur un Postgres local (jamais sur un vrai projet).

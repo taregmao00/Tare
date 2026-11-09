@@ -24,8 +24,8 @@ insert into site (id, entreprise_id, client_id, nom, distance_km, contact_email)
  ('50000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000001','Magasin',3,'contact@exemple.fr'),
  ('50000000-0000-0000-0000-000000000002','e0000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000001','Entrepôt',5,null);
 insert into instrument (id, entreprise_id, site_id, numero, type, marque, numero_serie, statut_metrologie, echeance_verification) values
- ('10000000-0000-0000-0000-000000000802','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0802','Balance poids-prix','Tarvex','TX-1','verte','2026-11-01'),
- ('10000000-0000-0000-0000-000000000803','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0803','Balance poids-prix','Balix','BX-1','verte','2026-12-01'),
+ ('10000000-0000-0000-0000-000000000802','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0802','Balance poids-prix','Tarvex','TX-1','verte','2026-11'),
+ ('10000000-0000-0000-0000-000000000803','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0803','Balance poids-prix','Balix','BX-1','verte','2026-12'),
  ('10000000-0000-0000-0000-000000000900','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000002','INS-0900','Plateforme','Balix','BX-9','a_verifier',null);
 insert into intervention (id, entreprise_id, agence_id, numero, type, client_id, site_id, statut, titulaire_id) values
  ('d0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000001','INT-0001','verification','c0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','en_cours','00000000-0000-0000-0000-0000000000a1');
@@ -45,8 +45,14 @@ select pg_temp.doit_echouer('instrument d''un autre site dans l''intervention',
  $q$insert into intervention_instrument (intervention_id, instrument_id, entreprise_id, site_id) values ('d0000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000900','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001')$q$);
 select pg_temp.doit_echouer('vignette verte sans échéance',
  $q$update instrument set echeance_verification=null where numero='INS-0802'$q$);
-select pg_temp.doit_echouer('échéance qui n''est pas un mois (15/11)',
+select pg_temp.doit_echouer('échéance avec un jour (2027-11-15)',
  $q$update instrument set echeance_verification='2027-11-15' where numero='INS-0802'$q$);
+select pg_temp.doit_echouer('échéance au mois 13',
+ $q$update instrument set echeance_verification='2027-13' where numero='INS-0802'$q$);
+select pg_temp.doit_echouer('échéance au format 11/2027',
+ $q$update instrument set echeance_verification='11/2027' where numero='INS-0802'$q$);
+select pg_temp.doit_passer('échéance 2027-11',
+ $q$update instrument set echeance_verification='2027-11' where numero='INS-0802'$q$);
 select pg_temp.doit_passer('instrument créé hors ligne (référence provisoire) avec n° de série en double',
  $q$insert into instrument (entreprise_id, site_id, reference_provisoire, type, numero_serie) values ('e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','PROV-tel1-20261109T1000','Balance','TX-1')$q$);
 select pg_temp.doit_echouer('instrument sans numéro ni référence',
@@ -68,7 +74,7 @@ select pg_temp.doit_echouer('vider le journal', $q$truncate journal$q$);
 insert into bon (id, entreprise_id, intervention_id, reference_provisoire, signe_le, titulaire_id, travaux_realises, minutes_chrono, nombre_personnes, minutes_facturees_par_personne, taux_horaire_applique_centimes, distance_km, forfait_deplacement_applique_centimes, libelle_zone, nombre_passages, nombre_forfaits_factures, nom_signataire, signature, total_ht_centimes)
 values ('b0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000001','PROV-tel1-20261109T0955','2026-11-09 09:55Z','00000000-0000-0000-0000-0000000000a1','Vérification des 2 balances',50,1,60,6500,3,5000,'Zone 1 (≤ 20 km)',1,1,'M. Dubois','data:image/png;base64,AAAA',11500);
 insert into bon_instrument values
- ('b0000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000802','e0000000-0000-0000-0000-000000000001',null,'conforme','2027-11-01',null),
+ ('b0000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000802','e0000000-0000-0000-0000-000000000001',null,'conforme','2027-11',null),
  ('b0000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000803','e0000000-0000-0000-0000-000000000001',null,'non_conforme',null,'Écart en charge');
 insert into ligne_bon (entreprise_id, bon_id, nature, code_article, designation, quantite, prix_unitaire_ht_centimes) values
  ('e0000000-0000-0000-0000-000000000001','b0000000-0000-0000-0000-000000000001','catalogue','1','Câble de capteur blindé 4 fils (le mètre)',2.5,450);
@@ -78,7 +84,7 @@ select pg_temp.doit_echouer('conforme sans nouvelle échéance',
 select pg_temp.doit_echouer('modifier les travaux d''un bon signé', $q$update bon set travaux_realises='autre'$q$);
 select pg_temp.doit_echouer('modifier le total d''un bon signé', $q$update bon set total_ht_centimes=1$q$);
 select pg_temp.doit_echouer('supprimer un bon signé', $q$delete from bon$q$);
-select pg_temp.doit_echouer('modifier un résultat de vérification', $q$update bon_instrument set resultat_verification='conforme', nouvelle_echeance='2027-12-01' where instrument_id='10000000-0000-0000-0000-000000000803'$q$);
+select pg_temp.doit_echouer('modifier un résultat de vérification', $q$update bon_instrument set resultat_verification='conforme', nouvelle_echeance='2027-12' where instrument_id='10000000-0000-0000-0000-000000000803'$q$);
 select pg_temp.doit_echouer('modifier une ligne de pièce', $q$update ligne_bon set prix_unitaire_ht_centimes=1$q$);
 select pg_temp.doit_echouer('retirer un instrument après signature', $q$delete from intervention_instrument where instrument_id='10000000-0000-0000-0000-000000000803'$q$);
 select pg_temp.doit_passer('attribuer le numéro définitif', $q$update bon set numero='BI-2026-0001'$q$);

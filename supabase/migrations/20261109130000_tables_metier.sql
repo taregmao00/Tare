@@ -4,7 +4,8 @@
 --   * chaque table porte entreprise_id ; les liens entre tables vérifient que les deux lignes
 --     sont de la même entreprise (clé « (id, entreprise_id) ») : aucun mélange possible ;
 --   * montants en centimes, distances en km entiers, heures en UTC ;
---   * une échéance de vignette est un mois : stockée comme le 1er jour de ce mois ;
+--   * une échéance de vignette est un mois et une année, comme sur la vignette :
+--     texte « AAAA-MM » (ex. 2027-11), valable jusqu'au dernier jour de ce mois ;
 --   * RLS activée sans aucune règle de lecture : rien n'est lisible depuis l'appli tant que
 --     le cloisonnement par agence n'est pas écrit (séance 7).
 
@@ -70,7 +71,7 @@ create table public.instrument (
   emplacement text,
   statut_metrologie text not null default 'a_verifier'
     check (statut_metrologie in ('verte', 'a_verifier', 'rouge')),
-  echeance_verification date check (extract(day from echeance_verification) = 1),
+  echeance_verification text check (echeance_verification ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),  -- AAAA-MM
   motif_statut text,
   cree_par_id uuid,
   cree_le timestamptz not null default now(),
@@ -311,7 +312,7 @@ create table public.bon_instrument (
   entreprise_id uuid not null references public.entreprise (id) on delete restrict,
   chaine_mesure_touchee boolean,
   resultat_verification text check (resultat_verification in ('conforme', 'non_conforme')),
-  nouvelle_echeance date check (extract(day from nouvelle_echeance) = 1),
+  nouvelle_echeance text check (nouvelle_echeance ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),  -- AAAA-MM
   observations text,
 
   primary key (bon_id, instrument_id),

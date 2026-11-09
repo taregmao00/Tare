@@ -11,3 +11,9 @@ Le cahier des charges complet est dans [CLAUDE.md](CLAUDE.md) ; `prototype.html`
 - `npm test` : lance les tests des règles métier
 - `npm run lint` : vérifie le code
 - `npm run build` : construit la version de production
+
+## Base de données (Supabase)
+
+- Projet de développement : `tare-dev` (données fictives uniquement).
+- Variables d'environnement : voir `.env.example` (à copier en `.env.local`, et à renseigner dans Vercel).
+- Les changements de base sont des fichiers versionnés dans `supabase/migrations/`, appliqués dans l'ordre de leur nom.

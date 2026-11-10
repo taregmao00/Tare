@@ -1,5 +1,6 @@
 -- Essais des verrous de la base (séance 6). Sur un Postgres local, après simulation-supabase.sql
--- et les migrations : chaque ligne doit afficher « OK », jamais « KO ».
+-- et les migrations (voir lancer.sh) : chaque ligne doit afficher « OK », jamais « KO ».
+-- Les droits de lecture depuis l'appli sont essayés dans cloisonnement.sql.
 \set ON_ERROR_STOP on
 create function pg_temp.doit_echouer(nom text, requete text) returns void language plpgsql as $$
 begin
@@ -119,9 +120,5 @@ select pg_temp.doit_echouer('retirer un instrument après signature, depuis l''a
  $q$delete from intervention_instrument where instrument_id='10000000-0000-0000-0000-000000000803'$q$);
 reset role;
 drop policy essai_retrait on intervention_instrument;
-revoke select, delete on intervention_instrument from authenticated;
-set role authenticated;
-set request.jwt.claim.sub = '00000000-0000-0000-0000-0000000000a1';
-select pg_temp.doit_echouer('lecture des interventions depuis l''appli (pas encore de règle RLS)', $q$select * from intervention$q$);
-reset role;
+revoke delete on intervention_instrument from authenticated;
 \echo FIN DES ESSAIS

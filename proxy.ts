@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { configSupabase } from "@/lib/supabase/config";
+import { examinerConfigSupabase } from "@/lib/supabase/config";
 
 /**
  * Exécuté avant chaque page :
@@ -9,7 +9,19 @@ import { configSupabase } from "@/lib/supabase/config";
  * La vraie protection des données reste la base (RLS), pas ce fichier.
  */
 export async function proxy(request: NextRequest) {
-  const { url, clePublique } = configSupabase();
+  const surConnexion = request.nextUrl.pathname.startsWith("/connexion");
+
+  const config = examinerConfigSupabase();
+  if (!config.ok) {
+    // Appli mal configurée : on garde l'écran de connexion, qui l'expliquera à la première tentative.
+    console.error(`[configuration] Configuration Supabase incorrecte : ${config.probleme}`);
+    if (surConnexion) return NextResponse.next({ request });
+    const destination = request.nextUrl.clone();
+    destination.pathname = "/connexion";
+    destination.search = "";
+    return NextResponse.redirect(destination);
+  }
+  const { url, clePublique } = config;
   let reponse = NextResponse.next({ request });
 
   const supabase = createServerClient(url, clePublique, {
@@ -30,7 +42,6 @@ export async function proxy(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const connecte = Boolean(data?.claims?.sub);
-  const surConnexion = request.nextUrl.pathname.startsWith("/connexion");
 
   if (connecte === surConnexion) {
     // Pas connecté hors de /connexion → /connexion ; déjà connecté sur /connexion → accueil.

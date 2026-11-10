@@ -19,13 +19,19 @@ export interface UtilisateurCourant {
   agence: string | null;
 }
 
+type ClientSupabase = Awaited<ReturnType<typeof supabaseServeur>>;
+
 /**
  * Utilisateur connecté et sa fiche (entreprise, agence, rôle).
  * - `null` : personne n'est connecté ;
  * - `"sans_fiche"` : compte de connexion qui n'est rattaché à aucune entreprise (ou désactivé).
+ *
+ * `supabase` : à fournir quand on vient juste de se connecter avec ce client (action de connexion).
  */
-export async function utilisateurCourant(): Promise<UtilisateurCourant | "sans_fiche" | null> {
-  const supabase = await supabaseServeur();
+export async function utilisateurCourant(
+  supabase?: ClientSupabase,
+): Promise<UtilisateurCourant | "sans_fiche" | null> {
+  supabase ??= await supabaseServeur();
 
   // getClaims vérifie la signature de la session (ne pas se fier à getSession côté serveur).
   const { data: session } = await supabase.auth.getClaims();
@@ -47,7 +53,9 @@ export async function utilisateurCourant(): Promise<UtilisateurCourant | "sans_f
       agence: { nom: string } | null;
     }>();
 
-  if (error) throw new Error(`Lecture de la fiche utilisateur impossible : ${error.message}`);
+  if (error) {
+    throw new Error(`Lecture de la fiche utilisateur impossible (${error.code}) : ${error.message}`);
+  }
   if (!data || !data.entreprise) return "sans_fiche";
 
   return {

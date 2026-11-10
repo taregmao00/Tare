@@ -1,7 +1,13 @@
 /**
  * Liste des interventions (CLAUDE.md §6.1) : ordre d'affichage et libellé du statut.
  */
-import type { Priorite } from "./metrologie.ts";
+import type { Priorite, TypeIntervention } from "./metrologie.ts";
+
+export const LIBELLES_TYPE: Record<TypeIntervention, string> = {
+  reparation: "Réparation",
+  verification: "Vérification",
+  installation: "Installation",
+};
 
 export type StatutIntervention = "a_faire" | "prise" | "en_cours" | "terminee" | "facturee";
 

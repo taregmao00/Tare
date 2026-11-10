@@ -137,3 +137,199 @@ button {
   background: transparent;
   color: var(--texte);
 }
+
+/* ---------------------------------------------------------------------------
+   Écran d'accueil : en-tête et liste des interventions (lecture seule).
+   --------------------------------------------------------------------------- */
+:root {
+  --urgent: #b3261e;
+  --urgent-fond: #f8ddda;
+  --a-faire: #8f5c06;
+  --a-faire-fond: #f7ead0;
+  --prise-fond: #dce6f4;
+  --ok: #1c7543;
+  --ok-fond: #dcf0e3;
+  --chrono: #0e3c2a;
+  --chrono-texte: #e9f6ef;
+  --neutre-fond: #e6e9ee;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --urgent: #f17a6f;
+    --urgent-fond: #3a1916;
+    --a-faire: #e5b552;
+    --a-faire-fond: #352812;
+    --prise-fond: #1e2c44;
+    --ok: #5cc98a;
+    --ok-fond: #163222;
+    --chrono: #5cc98a;
+    --chrono-texte: #0b1a12;
+    --neutre-fond: #2a303a;
+  }
+}
+
+.entete {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface);
+  border-bottom: 1px solid var(--bordure);
+}
+
+.entete-contenu,
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.entete-contenu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.entete .titre-appli {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.bouton-discret {
+  min-height: 44px; /* cible tactile ≥ 44 px (§7) */
+  padding: 0 12px;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--texte);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  padding-bottom: 48px;
+}
+
+.page p {
+  margin: 0;
+}
+
+.titre-page {
+  margin: 8px 0 0;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.vide {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--bordure);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--texte-discret);
+}
+
+.liste-interventions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.carte-intervention {
+  padding: 12px 14px;
+  gap: 2px;
+}
+
+/* Chrono qui tourne : liseré vert à gauche, comme sur le prototype. */
+.carte-intervention.chrono-tourne {
+  border-color: var(--chrono);
+  box-shadow: inset 4px 0 0 var(--chrono);
+}
+
+.ligne-entre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.numero {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  color: var(--texte-discret);
+}
+
+.carte-intervention .client {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  margin-top: 4px;
+}
+
+.carte-intervention .pied {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  color: var(--texte-discret);
+}
+
+.pastilles {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.pastille {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pastille-urgent {
+  background: var(--urgent);
+  color: var(--surface);
+}
+
+.pastille-a_faire {
+  background: var(--a-faire-fond);
+  color: var(--a-faire);
+}
+
+.pastille-prise {
+  background: var(--prise-fond);
+  color: var(--accent);
+}
+
+.pastille-en_cours {
+  background: var(--chrono);
+  color: var(--chrono-texte);
+}
+
+.pastille-en_pause {
+  background: var(--neutre-fond);
+  color: var(--texte);
+  box-shadow: inset 0 0 0 1px var(--bordure);
+}
+
+.pastille-terminee {
+  background: var(--ok-fond);
+  color: var(--ok);
+}
+
+.pastille-facturee {
+  background: var(--neutre-fond);
+  color: var(--texte-discret);
+}

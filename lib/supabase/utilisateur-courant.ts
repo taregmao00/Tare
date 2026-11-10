@@ -19,7 +19,7 @@ export interface UtilisateurCourant {
   agence: string | null;
 }
 
-type ClientSupabase = Awaited<ReturnType<typeof supabaseServeur>>;
+export type ClientSupabase = Awaited<ReturnType<typeof supabaseServeur>>;
 
 /**
  * Utilisateur connecté et sa fiche (entreprise, agence, rôle).

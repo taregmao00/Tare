@@ -19,9 +19,9 @@ import {
 } from "./donnees-demo.ts";
 
 /** Arrête le script avec une explication si Supabase a refusé une opération. */
-function exiger<T>(quoi: string, resultat: { data: T; error: { message: string; code?: string } | null }): T {
-  if (resultat.error) {
-    arreter(`${quoi} : refusé par Supabase (${resultat.error.code ?? "sans code"}) — ${resultat.error.message}`);
+function exiger<T>(quoi: string, resultat: { data: T | null; error: { message: string; code?: string } | null }): T {
+  if (resultat.error || resultat.data === null) {
+    arreter(`${quoi} : refusé par Supabase (${resultat.error?.code ?? "sans code"}) — ${resultat.error?.message ?? "aucune réponse"}`);
   }
   return resultat.data;
 }

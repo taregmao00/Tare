@@ -7,8 +7,10 @@ import { configSupabase } from "./config";
  * lue dans ses cookies. À créer à chaque requête, jamais partagée entre deux utilisateurs.
  */
 export async function supabaseServeur() {
-  const { url, clePublique } = configSupabase();
+  // Les cookies d'abord : pendant la construction de l'appli (sans utilisateur), l'exécution
+  // s'arrête ici, et la configuration n'est contrôlée que pour une vraie requête.
   const cookieStore = await cookies();
+  const { url, clePublique } = configSupabase();
 
   return createServerClient(url, clePublique, {
     cookies: {

@@ -1,7 +1,7 @@
 /**
  * Forfait de déplacement et passages (CLAUDE.md §6.4).
  */
-import { jourParis } from "./dates";
+import { jourParis } from "./dates.ts";
 
 /** Réglages de l'entreprise (montants en centimes). */
 export interface ReglagesDeplacement {

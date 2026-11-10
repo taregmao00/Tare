@@ -7,7 +7,7 @@ import {
   type ConsequencesBon,
   type ResultatInstrument,
   type TypeIntervention,
-} from "./metrologie";
+} from "./metrologie.ts";
 
 export type StatutBon = "valide" | "annule_remplace" | "refuse";
 

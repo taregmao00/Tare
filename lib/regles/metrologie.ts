@@ -9,7 +9,7 @@ import {
   moisEntre,
   type JourCalendaire,
   type MoisCalendaire,
-} from "./dates";
+} from "./dates.ts";
 
 export type StatutMetrologie = "verte" | "a_verifier" | "rouge";
 export type TypeIntervention = "reparation" | "verification" | "installation";

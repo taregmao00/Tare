@@ -112,9 +112,9 @@ if (!secrete) {
     if (!fiche) defauts.push("pas de fiche dans la table « utilisateur »");
     else if (!fiche.actif) defauts.push("fiche désactivée (actif = faux)");
     const detail = fiche ? `${fiche.role}, ${fiche.entreprise?.nom ?? "?"}, ${fiche.agence?.nom ?? "sans agence"}` : "";
+    if (compte.email) emailsAEssayer.push(compte.email);
     if (defauts.length === 0) {
       ok(`${compte.email} : compte confirmé, fiche active (${detail}).`);
-      if (compte.email) emailsAEssayer.push(compte.email);
     } else {
       ko(`${compte.email} : ${defauts.join(" ; ")}. → « npm run demo » répare les comptes de démonstration.`);
     }

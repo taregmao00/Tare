@@ -51,6 +51,41 @@ export function joursEntre(de: JourCalendaire, a: JourCalendaire): number {
   return Math.round((enMs(a) - enMs(de)) / MS_PAR_JOUR);
 }
 
+/** Ajoute (ou retire) des jours : "2026-12-31" + 1 → "2027-01-01". */
+export function ajouterJours(jour: JourCalendaire, n: number): JourCalendaire {
+  return depuisMs(enMs(jour) + n * MS_PAR_JOUR);
+}
+
+const formateurHeureParis = new Intl.DateTimeFormat("en-CA", {
+  timeZone: FUSEAU,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** Avance de l'heure de Paris sur l'heure UTC à cet instant (1 h en hiver, 2 h en été), en ms. */
+function decalageParisMs(ms: number): number {
+  const p: Record<string, number> = {};
+  for (const { type, value } of formateurHeureParis.formatToParts(new Date(ms))) p[type] = Number(value);
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - Math.floor(ms / 60_000) * 60_000;
+}
+
+/**
+ * L'instant (UTC) qui correspond à un jour et une heure lus sur une horloge à Paris :
+ * ("2026-11-09", "07:52") → 2026-11-09T06:52:00Z. Sans heure : le début du jour à Paris.
+ */
+export function instantParis(jour: JourCalendaire, heure = "00:00"): Date {
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(heure);
+  if (!m) throw new Error(`Heure invalide : « ${heure} » (format attendu HH:MM)`);
+  const vise = enMs(jour) + (Number(m[1]) * 60 + Number(m[2])) * 60_000;
+  // Deux passes : la seconde corrige le résultat autour d'un changement d'heure.
+  const approche = vise - decalageParisMs(vise);
+  return new Date(vise - decalageParisMs(approche));
+}
+
 /**
  * Un mois au format "AAAA-MM", par exemple "2027-11".
  * Sert aux échéances de vérification : la vignette n'indique que le mois et l'année,

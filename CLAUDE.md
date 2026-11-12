@@ -276,6 +276,8 @@ La barre du chrono actif s'affiche au-dessus de la navigation (temps, montant, P
 
 **Règles d'interface :** mobile d'abord (Android), cibles tactiles ≥ 44 px, champs en 16 px minimum, un bon doit se remplir en **moins de 2 à 3 minutes**, textes en français clair, thèmes clair et sombre, état « vide » explicite sur chaque liste.
 
+**Saisie d'une échéance** (fiche instrument, bon) : jamais au clavier. Deux listes déroulantes, **mois (1 à 12)** et **année** (seulement les années autorisées), préremplies avec l'échéance proposée ; les mois hors limites (§6.8) ne sont pas sélectionnables. Affichage `MM/AAAA` ; stockage en base au format texte `AAAA-MM`.
+
 ---
 
 ## 8. Technique

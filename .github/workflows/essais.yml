@@ -1,0 +1,59 @@
+# Essais automatiques : lancés par GitHub à chaque envoi de code et à chaque demande de fusion.
+# Une croix rouge = un essai a échoué ; cliquer dessus pour lire lequel.
+# Aucune clé ni donnée réelle ici : la base utilisée est créée vide pour l'essai, puis jetée.
+name: Essais
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: essais-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  appli:
+    name: Appli (lint, règles métier, construction)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Installation des dépendances
+        run: npm ci
+      - name: Vérification du code (lint)
+        run: npm run lint
+      - name: Tests des règles métier (lib/regles) et des scripts
+        run: npm test
+      - name: Construction de l'appli
+        run: npm run build
+
+  base:
+    name: Base (migrations, verrous, cloisonnement)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      # Base jetable, créée vide pour cet essai : ce mot de passe n'est pas un secret.
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v5
+      - name: Migrations sur une base vierge, puis essais des verrous et du cloisonnement
+        run: bash supabase/tests/lancer.sh

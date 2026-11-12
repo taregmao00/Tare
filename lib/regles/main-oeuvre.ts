@@ -1,7 +1,7 @@
 /**
  * Chrono et main-d'œuvre facturée (CLAUDE.md §6.2 et §6.3).
  */
-import { diviserArrondi } from "./montants";
+import { diviserArrondi } from "./montants.ts";
 
 /** Un segment de chrono. `fin` est nulle tant que le chrono tourne. */
 export interface Segment {

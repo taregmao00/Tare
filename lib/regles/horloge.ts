@@ -2,14 +2,13 @@
  * Contrôle de l'heure du téléphone à la synchronisation (CLAUDE.md §6.9).
  * Un segment n'est jamais refusé : au pire, ses heures sont ramenées à l'heure du serveur.
  */
+import type { Segment } from "./main-oeuvre.ts";
 
 /** Tolérance : les téléphones avancent souvent d'une ou deux minutes. */
 export const TOLERANCE_HORLOGE_MS = 5 * 60_000;
 
-export interface SegmentRecu {
-  debut: Date;
-  fin: Date | null;
-}
+/** Segment tel que reçu du téléphone : même forme que le segment du chrono. */
+export type SegmentRecu = Segment;
 
 export interface SegmentAjuste {
   debut: Date;

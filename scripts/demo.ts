@@ -5,7 +5,7 @@
  * - Peut être relancé autant de fois qu'on veut : ce qui existe déjà est gardé tel quel,
  *   seul ce qui manque est créé. Rien n'est jamais supprimé.
  * - L'entreprise « Pesage Démo » et le compte de Karim créés à la main sont réutilisés.
- * - Les 4 comptes de démonstration sont confirmés et reçoivent le mot de passe DEMO_MOT_DE_PASSE.
+ * - Les 5 comptes de démonstration sont confirmés et reçoivent le mot de passe DEMO_MOT_DE_PASSE.
  * - La clé secrète et le mot de passe sont lus dans .env.admin ; ils ne sont jamais affichés.
  */
 import type { SupabaseClient, User } from "@supabase/supabase-js";
@@ -136,7 +136,7 @@ let agenceId: string;
   }
 }
 
-// --- 6. Les 4 comptes : créés ou réparés (confirmés, mot de passe de démonstration) -------------
+// --- 6. Les 5 comptes : créés ou réparés (confirmés, mot de passe de démonstration) -------------
 const utilisateurs = {} as Record<CleUtilisateur, string>;
 for (const u of UTILISATEURS_DEMO) {
   const existant = compteDe(u.email);

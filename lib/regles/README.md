@@ -14,6 +14,8 @@ Module unique des règles métier. Uniquement des **fonctions pures** (pas d'acc
 | `rectificatif.ts` | §6.7 : ce qu'un rectificatif peut changer, et ses conséquences |
 | `horloge.ts` | §6.9 : segments en avance, écart d'horloge |
 | `interventions.ts` | §6.1 : ordre de la liste, statut affiché (« En cours » / « En pause »), urgence |
+| `roles.ts` | §4 et §7 : rôles, qui gère le parc, onglets selon le rôle |
+| `parc.ts` | §5 : contrôle de la saisie d'un client et d'un site |
 
 Montants en **centimes entiers**. Instants en `Date` (UTC), jours en texte `AAAA-MM-JJ` (Paris).
 

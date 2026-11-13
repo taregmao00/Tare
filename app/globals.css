@@ -103,13 +103,60 @@ button {
   font-weight: 600;
 }
 
-.formulaire input {
+.formulaire input:not([type="checkbox"]),
+.formulaire select,
+.formulaire textarea {
   min-height: 48px; /* cible tactile ≥ 44 px (§7) */
   padding: 0 12px;
   border: 1px solid var(--bordure);
   border-radius: 8px;
   background: var(--surface);
   color: var(--texte);
+  font-weight: 400;
+}
+
+.formulaire textarea {
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.formulaire input[aria-invalid="true"],
+.formulaire select[aria-invalid="true"],
+.formulaire textarea[aria-invalid="true"] {
+  border-color: var(--erreur);
+  border-width: 2px;
+}
+
+/* Sous un champ : explication, puis erreur éventuelle. */
+.formulaire .aide,
+.formulaire .facultatif,
+.formulaire label > .erreur {
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.formulaire .aide,
+.formulaire .facultatif {
+  color: var(--texte-discret);
+}
+
+.formulaire .case {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+}
+
+.formulaire .case input {
+  width: 24px;
+  height: 24px;
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+.formulaire .case .aide {
+  display: block;
 }
 
 .bouton-principal,
@@ -120,6 +167,12 @@ button {
   font-weight: 600;
   cursor: pointer;
   width: 100%;
+  /* Un bouton peut aussi être un lien (« Annuler », « Modifier ») : même aspect. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
 }
 
 .bouton-principal {
@@ -190,8 +243,9 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 52px;
 }
 
 .entete .titre-appli {
@@ -199,15 +253,14 @@ button {
   font-weight: 700;
 }
 
-.bouton-discret {
-  min-height: 44px; /* cible tactile ≥ 44 px (§7) */
-  padding: 0 12px;
-  border: 1px solid var(--bordure);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--texte);
-  font-weight: 600;
-  cursor: pointer;
+/* Nom de l'utilisateur et de son agence, à droite de l'en-tête. */
+.identite {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  min-width: 0;
 }
 
 .page {
@@ -215,7 +268,8 @@ button {
   flex-direction: column;
   gap: 12px;
   padding-top: 16px;
-  padding-bottom: 48px;
+  /* Place pour la barre d'onglets fixée en bas. */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 32px);
 }
 
 .page p {
@@ -236,7 +290,7 @@ button {
   color: var(--texte-discret);
 }
 
-.liste-interventions {
+.liste {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -270,9 +324,12 @@ button {
   color: var(--texte-discret);
 }
 
-.carte-intervention .client {
+.titre-carte {
   font-weight: 600;
   font-size: 1.0625rem;
+}
+
+.carte-intervention .titre-carte {
   margin-top: 4px;
 }
 
@@ -332,4 +389,130 @@ button {
 .pastille-facturee {
   background: var(--neutre-fond);
   color: var(--texte-discret);
+}
+
+.pastille-critique {
+  background: var(--urgent-fond);
+  color: var(--urgent);
+}
+
+/* ---------------------------------------------------------------------------
+   Parc : clients, sites, instruments.
+   --------------------------------------------------------------------------- */
+.titre-section {
+  margin: 12px 0 0;
+  font-size: 1.125rem;
+}
+
+/* Carte entièrement cliquable (un client dans la liste). */
+.carte-lien {
+  color: inherit;
+  text-decoration: none;
+  min-height: 64px;
+  justify-content: center;
+}
+
+.carte-lien:active {
+  background: var(--neutre-fond);
+}
+
+.carte > .bouton-secondaire {
+  margin-top: 10px;
+}
+
+/* Petit bouton d'action à côté d'un titre (« + Nouveau client »). */
+.bouton-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* cible tactile ≥ 44 px (§7) */
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--texte-sur-accent);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.retour,
+.lien-tactile {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.retour {
+  margin: -8px 0 -12px;
+  align-self: flex-start;
+}
+
+/* Instruments d'un site. */
+.sous-liste {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--bordure);
+}
+
+.sous-liste li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.vignette {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.vignette-vert {
+  color: var(--ok);
+}
+
+.vignette-orange {
+  color: var(--a-faire);
+}
+
+.vignette-rouge {
+  color: var(--urgent);
+}
+
+/* ---------------------------------------------------------------------------
+   Barre d'onglets du bas (selon le rôle, §7).
+   --------------------------------------------------------------------------- */
+.onglets {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  background: var(--surface);
+  border-top: 1px solid var(--bordure);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.onglet {
+  flex: 1;
+  max-width: 13rem;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--texte-discret);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.onglet[aria-current="page"] {
+  color: var(--accent);
 }

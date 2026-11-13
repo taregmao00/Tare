@@ -7,3 +7,5 @@ export * from "./metrologie.ts";
 export * from "./rectificatif.ts";
 export * from "./horloge.ts";
 export * from "./interventions.ts";
+export * from "./roles.ts";
+export * from "./parc.ts";

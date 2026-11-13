@@ -73,3 +73,10 @@ export function totalBon(e: EntreeTotalBon): TotalBon {
       e.mainOeuvreCentimes + deplacementCentimes + piecesCentimes + petitMaterielCentimes,
   };
 }
+
+const formatEuros = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
+
+/** Montant en centimes → texte à afficher : 5000 → « 50,00 € ». */
+export function formaterEuros(centimes: number): string {
+  return formatEuros.format(centimes / 100);
+}

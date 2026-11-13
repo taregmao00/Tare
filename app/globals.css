@@ -53,6 +53,11 @@ button {
   font-size: max(16px, 1em);
 }
 
+/* Liens dans le texte : couleur de l'appli, dans les deux thèmes. */
+a {
+  color: var(--accent);
+}
+
 .page-etroite {
   max-width: 28rem;
   margin: 0 auto;
@@ -458,11 +463,23 @@ button {
 }
 
 .sous-liste li {
+  border-bottom: 1px solid var(--bordure);
+}
+
+/* Ligne cliquable d'une sous-liste (un instrument dans la fiche d'un client). */
+.ligne-lien {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--bordure);
+  min-height: 56px;
+  padding: 6px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ligne-lien:active {
+  background: var(--neutre-fond);
 }
 
 .vignette {
@@ -515,4 +532,132 @@ button {
 
 .onglet[aria-current="page"] {
   color: var(--accent);
+}
+
+/* Les deux vues du Parc : Clients | Instruments. */
+.sous-onglets {
+  display: flex;
+  border: 1px solid var(--bordure);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sous-onglets a {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texte);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sous-onglets a[aria-current="page"] {
+  background: var(--accent);
+  color: var(--texte-sur-accent);
+}
+
+/* Recherche d'un instrument. */
+.recherche label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: var(--texte-discret);
+}
+
+.recherche-ligne {
+  display: flex;
+  gap: 8px;
+}
+
+.recherche input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--texte);
+}
+
+.recherche .bouton-action {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Fiche d'un instrument : libellé à gauche, valeur à droite. */
+.fiche {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+}
+
+.fiche dt {
+  color: var(--texte-discret);
+}
+
+.fiche dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.avertissement {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--a-faire-fond);
+  color: var(--a-faire);
+}
+
+.avertissement a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* Deux champs côte à côte (marque et modèle, mois et année). */
+.deux-colonnes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.deux-colonnes > label {
+  min-width: 0;
+}
+
+.deux-colonnes input,
+.deux-colonnes select {
+  width: 100%;
+}
+
+.formulaire .echeance {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.formulaire .echeance legend {
+  padding: 0;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.formulaire .echeance label {
+  font-weight: 400;
+  font-size: 0.875rem;
+  color: var(--texte-discret);
+}
+
+.formulaire .echeance > .erreur,
+.formulaire .echeance > .aide {
+  font-size: 0.875rem;
 }

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { controlerClient, controlerSite } from "./parc";
+import {
+  anneesDesLimites,
+  controlerClient,
+  controlerFicheInstrument,
+  controlerNouvelInstrument,
+  controlerSite,
+  limitesEcheanceEnregistrement,
+  moisDansLimites,
+} from "./parc";
 import { ongletsPour, peutGererParc } from "./roles";
 
 describe("saisie d'un client", () => {
@@ -100,5 +108,107 @@ describe("rôles (§4 et §7)", () => {
     expect(ongletsPour("chef_agence")).toEqual(["interventions", "parc", "reglages"]);
     expect(ongletsPour("administrateur")).toEqual(["interventions", "parc", "reglages"]);
     expect(ongletsPour("gestionnaire")).toEqual(["interventions", "reglages"]);
+  });
+});
+
+describe("saisie d'un instrument", () => {
+  const AUJOURDHUI = "2026-11-13";
+  const fiche = {
+    type: "Balance poids-prix",
+    marque: "Balix",
+    modele: "C15",
+    numero_serie: "BX-40120",
+    portee_max: "15 kg",
+    echelon: "5 g",
+    millesime: "2019",
+    emplacement: "Étal fromages",
+  };
+
+  it("fiche complète acceptée ; millésime et emplacement facultatifs", () => {
+    expect(controlerFicheInstrument(fiche, AUJOURDHUI)).toEqual({
+      ok: true,
+      valeurs: { ...fiche, millesime: 2019 },
+    });
+    const sans = controlerFicheInstrument({ ...fiche, millesime: "", emplacement: " " }, AUJOURDHUI);
+    expect(sans.ok).toBe(true);
+    if (sans.ok) expect([sans.valeurs.millesime, sans.valeurs.emplacement]).toEqual([null, null]);
+  });
+
+  it("type, marque, modèle, n° de série, portée et échelon sont obligatoires (décision du 12/11/2026)", () => {
+    const c = controlerFicheInstrument({ millesime: "2019" }, AUJOURDHUI);
+    expect(c.ok).toBe(false);
+    if (!c.ok) {
+      expect(Object.keys(c.erreurs).sort()).toEqual(["echelon", "marque", "modele", "numero_serie", "portee_max", "type"]);
+      expect(c.erreurs.numero_serie).toBe("Le n° de série est obligatoire.");
+    }
+  });
+
+  it("millésime : une année plausible", () => {
+    for (const millesime of ["19", "1899", "2028", "deux mille", "2019.5"]) {
+      expect(controlerFicheInstrument({ ...fiche, millesime }, AUJOURDHUI).ok, millesime).toBe(false);
+    }
+    expect(controlerFicheInstrument({ ...fiche, millesime: "2027" }, AUJOURDHUI).ok).toBe(true);
+  });
+
+  it("création avec une vignette verte : échéance choisie dans deux listes", () => {
+    const c = controlerNouvelInstrument(
+      { ...fiche, statut_metrologie: "verte", echeance_mois: "5", echeance_annee: "2027", motif_statut: "ignoré" },
+      AUJOURDHUI,
+    );
+    expect(c.ok).toBe(true);
+    if (c.ok) {
+      expect(c.valeurs.statut_metrologie).toBe("verte");
+      expect(c.valeurs.echeance_verification).toBe("2027-05");
+      expect(c.valeurs.motif_statut).toBeNull();
+    }
+  });
+
+  it("vignette verte sans échéance : refusée", () => {
+    const c = controlerNouvelInstrument({ ...fiche, statut_metrologie: "verte", echeance_annee: "2027" }, AUJOURDHUI);
+    expect(c.ok).toBe(false);
+    if (!c.ok) expect(Object.keys(c.erreurs)).toEqual(["echeance"]);
+  });
+
+  it("une vignette périmée s'enregistre telle qu'elle est (elle s'affichera en rouge)", () => {
+    const c = controlerNouvelInstrument(
+      { ...fiche, statut_metrologie: "verte", echeance_mois: "10", echeance_annee: "2026" },
+      AUJOURDHUI,
+    );
+    expect(c.ok).toBe(true);
+  });
+
+  it("échéance limitée à 2 ans dans chaque sens", () => {
+    const limites = limitesEcheanceEnregistrement(AUJOURDHUI);
+    expect(limites).toEqual({ min: "2024-11", max: "2028-11" });
+    expect(anneesDesLimites(limites)).toEqual([2024, 2025, 2026, 2027, 2028]);
+    expect(moisDansLimites("2024-11", limites)).toBe(true);
+    expect(moisDansLimites("2028-11", limites)).toBe(true);
+    expect(moisDansLimites("2024-10", limites)).toBe(false);
+    expect(moisDansLimites("2028-12", limites)).toBe(false);
+    for (const [echeance_mois, echeance_annee] of [["12", "2028"], ["10", "2024"], ["13", "2027"], ["0", "2027"]]) {
+      const c = controlerNouvelInstrument({ ...fiche, statut_metrologie: "verte", echeance_mois, echeance_annee }, AUJOURDHUI);
+      expect(c.ok, `${echeance_mois}/${echeance_annee}`).toBe(false);
+    }
+  });
+
+  it("« À vérifier » ou vignette rouge : pas d'échéance, motif facultatif", () => {
+    const c = controlerNouvelInstrument(
+      { ...fiche, statut_metrologie: "a_verifier", echeance_mois: "5", echeance_annee: "2027", motif_statut: "Vérification primitive à réaliser" },
+      AUJOURDHUI,
+    );
+    expect(c.ok).toBe(true);
+    if (c.ok) {
+      expect(c.valeurs.echeance_verification).toBeNull();
+      expect(c.valeurs.motif_statut).toBe("Vérification primitive à réaliser");
+    }
+    expect(controlerNouvelInstrument({ ...fiche, statut_metrologie: "rouge" }, AUJOURDHUI).ok).toBe(true);
+  });
+
+  it("la vignette doit être indiquée", () => {
+    for (const statut_metrologie of [undefined, "", "inconnu"]) {
+      const c = controlerNouvelInstrument({ ...fiche, statut_metrologie }, AUJOURDHUI);
+      expect(c.ok).toBe(false);
+      if (!c.ok) expect(c.erreurs.statut_metrologie).toBeDefined();
+    }
   });
 });

@@ -4,12 +4,13 @@ import { Ecran, ErreurLecture, SansAcces, Vide } from "@/app/_composants/etats";
 import { peutGererParc } from "@/lib/regles";
 import { listerClients } from "@/lib/supabase/parc";
 import { session } from "@/lib/supabase/utilisateur-courant";
+import { SousOnglets } from "./affichage";
 
 export const metadata: Metadata = { title: "Parc · Tare" };
 
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
-/** Parc : les clients de l'agence (échéances, recherche et fiches instrument : séances suivantes). */
+/** Parc, vue par client (l'autre vue, « Instruments », a la recherche ; échéances et alertes : bloc 7). */
 export default function Parc() {
   return (
     <Ecran>
@@ -36,6 +37,7 @@ async function Contenu() {
           </Link>
         )}
       </div>
+      <SousOnglets actif="clients" />
 
       {!clients.ok ? (
         <ErreurLecture quoi="Clients" code={clients.code} detail={clients.detail} />

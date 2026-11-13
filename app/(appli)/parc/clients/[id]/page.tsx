@@ -1,17 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Ecran, ErreurLecture, Retour, SansAcces, Vide } from "@/app/_composants/etats";
-import {
-  affichageVignette,
-  forfaitDeplacement,
-  formaterEuros,
-  formaterMois,
-  jourParis,
-  peutGererParc,
-  type ReglagesDeplacement,
-} from "@/lib/regles";
+import { forfaitDeplacement, formaterEuros, jourParis, peutGererParc, type ReglagesDeplacement } from "@/lib/regles";
 import { lireClient, lireReglagesDeplacement, type SiteDetail } from "@/lib/supabase/parc";
 import { session } from "@/lib/supabase/utilisateur-courant";
+import { Vignette } from "../../affichage";
 
 export const metadata: Metadata = { title: "Client · Tare" };
 
@@ -135,10 +128,9 @@ function CarteSite({
         <p className="discret">Aucun instrument sur ce site.</p>
       ) : (
         <ul className="sous-liste">
-          {site.instruments.map((i) => {
-            const vignette = affichageVignette(i.statut, i.echeance, aujourdhui);
-            return (
-              <li key={i.id}>
+          {site.instruments.map((i) => (
+            <li key={i.id}>
+              <Link href={`/parc/instruments/${i.id}`} className="ligne-lien">
                 <span>
                   <span className="numero">{i.numero}</span> {i.type}
                   <span className="discret">
@@ -146,16 +138,18 @@ function CarteSite({
                     · {i.marque} {i.modele}
                   </span>
                 </span>
-                <span className={`vignette vignette-${vignette.couleur}`}>
-                  {vignette.libelle}
-                  {i.statut === "verte" && i.echeance && ` (${formaterMois(i.echeance)})`}
-                </span>
-              </li>
-            );
-          })}
+                <Vignette statut={i.statut} echeance={i.echeance} aujourdhui={aujourdhui} />
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
 
+      {gere && (
+        <Link href={`/parc/sites/${site.id}/instruments/nouveau`} className="bouton-secondaire">
+          + Ajouter un instrument
+        </Link>
+      )}
       {gere && (
         <Link href={`/parc/sites/${site.id}/modifier`} className="bouton-secondaire">
           Modifier le site

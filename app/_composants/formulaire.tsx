@@ -9,6 +9,11 @@ type Action = (etat: EtatFormulaire, formulaire: FormData) => Promise<EtatFormul
 
 const Etat = createContext<EtatFormulaire>({ erreur: null, erreurs: {}, valeurs: {} });
 
+/** Pour un champ composé (ex. l'échéance en deux listes) : ce qui a été saisi et les erreurs en cours. */
+export function useEtatFormulaire(): EtatFormulaire {
+  return use(Etat);
+}
+
 /**
  * Formulaire commun à toute l'appli : envoie la saisie au serveur, réaffiche ce qui a été tapé
  * en cas d'erreur, et traite ici le seul cas que le serveur ne peut pas voir : le téléphone n'a
@@ -86,7 +91,8 @@ function Libelle({ libelle, facultatif }: { libelle: string; facultatif?: boolea
   );
 }
 
-function Pied({ nom, aide }: { nom: string; aide?: string }) {
+/** Explication et erreur éventuelle, sous un champ. */
+export function Pied({ nom, aide }: { nom: string; aide?: string }) {
   const erreur = use(Etat).erreurs[nom];
   return (
     <>
@@ -109,18 +115,29 @@ export function Champ({
   type = "text",
   inputMode,
   autoComplete = "off",
+  suggestions,
 }: ProprietesChamp & {
   type?: "text" | "email" | "tel" | "password";
   inputMode?: "text" | "email" | "tel" | "numeric";
   autoComplete?: string;
+  /** Valeurs proposées pendant la frappe ; on peut toujours en écrire une autre. */
+  suggestions?: string[];
 }) {
   const etat = use(Etat);
   return (
     <label>
       <Libelle libelle={libelle} facultatif={facultatif} />
+      {suggestions && (
+        <datalist id={`suggestions-${nom}`}>
+          {suggestions.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      )}
       <input
         type={type}
         name={nom}
+        list={suggestions ? `suggestions-${nom}` : undefined}
         inputMode={inputMode}
         autoComplete={autoComplete}
         // Un mot de passe n'est jamais réaffiché.

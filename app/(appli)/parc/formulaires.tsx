@@ -1,4 +1,5 @@
 import { Champ, ChampCase, ChampChoix, ChampTexteLong } from "@/app/_composants/formulaire";
+import { TYPES_INSTRUMENT_PROPOSES } from "@/lib/regles";
 
 /** Champs d'un client, communs à la création et à la modification. */
 export function ChampsClient({ agences }: { agences?: { id: string; nom: string }[] }) {
@@ -46,6 +47,31 @@ export function ChampsSite() {
         facultatif
         aide="Le bon signé sera envoyé à cette adresse (modifiable sur le bon)."
       />
+    </>
+  );
+}
+
+/** Champs de la fiche d'un instrument, communs à la création et à la modification. */
+export function ChampsFicheInstrument() {
+  return (
+    <>
+      <Champ
+        nom="type"
+        libelle="Type d'instrument"
+        suggestions={TYPES_INSTRUMENT_PROPOSES}
+        aide="Choisissez dans la liste proposée ou écrivez le vôtre."
+      />
+      <div className="deux-colonnes">
+        <Champ nom="marque" libelle="Marque" />
+        <Champ nom="modele" libelle="Modèle" />
+      </div>
+      <Champ nom="numero_serie" libelle="N° de série" aide="Tel qu'il est gravé sur la plaque de l'instrument." />
+      <div className="deux-colonnes">
+        <Champ nom="portee_max" libelle="Portée (Max)" aide="Exemple : 15 kg" />
+        <Champ nom="echelon" libelle="Échelon (e)" aide="Exemple : 5 g" />
+      </div>
+      <Champ nom="millesime" libelle="Millésime" inputMode="numeric" facultatif aide="Année sur 4 chiffres." />
+      <Champ nom="emplacement" libelle="Emplacement" facultatif aide="Exemple : Étal fruits, Quai de réception." />
     </>
   );
 }

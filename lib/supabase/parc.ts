@@ -1,4 +1,10 @@
-import type { MoisCalendaire, ReglagesDeplacement, StatutMetrologie } from "@/lib/regles";
+import type {
+  MoisCalendaire,
+  ReglagesDeplacement,
+  StatutIntervention,
+  StatutMetrologie,
+  TypeIntervention,
+} from "@/lib/regles";
 import type { ClientSupabase } from "./utilisateur-courant";
 
 /** Résultat d'une lecture : les données, ou le code d'erreur de la base. */
@@ -192,6 +198,126 @@ export async function lireReglagesDeplacement(supabase: ClientSupabase): Promise
       montantZone1Centimes: data.montant_zone1_centimes,
       montantZone2Centimes: data.montant_zone2_centimes,
       montantZone3Centimes: data.montant_zone3_centimes,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Instruments
+// ---------------------------------------------------------------------------
+
+const LIEN_SITE_ET_CLIENT =
+  "site:site!instrument_site_meme_entreprise(id, nom, client:client!site_client_meme_entreprise(id, nom))";
+
+export interface InstrumentListe extends InstrumentResume {
+  numeroSerie: string;
+  site: string;
+  clientId: string;
+  client: string;
+}
+
+interface InstrumentLu {
+  id: string;
+  numero: string | null;
+  reference_provisoire: string | null;
+  type: string;
+  marque: string;
+  modele: string;
+  numero_serie: string;
+  statut_metrologie: StatutMetrologie;
+  echeance_verification: MoisCalendaire | null;
+  site: { id: string; nom: string; client: { id: string; nom: string } | null } | null;
+}
+
+const COLONNES_INSTRUMENT =
+  "id, numero, reference_provisoire, type, marque, modele, numero_serie, statut_metrologie, echeance_verification";
+
+function resume(i: InstrumentLu): InstrumentListe {
+  return {
+    id: i.id,
+    numero: i.numero ?? i.reference_provisoire ?? "",
+    type: i.type,
+    marque: i.marque,
+    modele: i.modele,
+    numeroSerie: i.numero_serie,
+    statut: i.statut_metrologie,
+    echeance: i.echeance_verification,
+    site: i.site?.nom ?? "",
+    clientId: i.site?.client?.id ?? "",
+    client: i.site?.client?.nom ?? "",
+  };
+}
+
+/** Les instruments que l'utilisateur a le droit de voir, par numéro. */
+export async function listerInstruments(supabase: ClientSupabase): Promise<Lecture<InstrumentListe[]>> {
+  const { data, error } = await supabase
+    .from("instrument")
+    .select(`${COLONNES_INSTRUMENT}, ${LIEN_SITE_ET_CLIENT}`)
+    .returns<InstrumentLu[]>();
+  if (error) return echec(error);
+  return { ok: true, donnees: data.map(resume).sort((a, b) => a.numero.localeCompare(b.numero)) };
+}
+
+export interface InstrumentDetail extends InstrumentListe {
+  portee_max: string;
+  echelon: string;
+  millesime: number | null;
+  emplacement: string | null;
+  motifStatut: string | null;
+  siteId: string;
+  /** Interventions qui ont porté sur cet instrument, de la plus récente à la plus ancienne. */
+  interventions: { id: string; numero: string; type: TypeIntervention; statut: StatutIntervention; recueLe: Date }[];
+  /** Autres instruments visibles qui portent le même n° de série (double possible, §6.9). */
+  memeNumeroSerie: { id: string; numero: string }[];
+}
+
+/** La fiche complète d'un instrument, avec son historique. `null` s'il n'existe pas (ou n'est pas visible). */
+export async function lireInstrument(supabase: ClientSupabase, id: string): Promise<Lecture<InstrumentDetail | null>> {
+  const { data, error } = await supabase
+    .from("instrument")
+    .select(
+      `${COLONNES_INSTRUMENT}, portee_max, echelon, millesime, emplacement, motif_statut, ${LIEN_SITE_ET_CLIENT}, ` +
+        "intervention_instrument!ii_instrument_du_site(intervention:intervention!ii_intervention_meme_entreprise(id, numero, type, statut, recue_le))",
+    )
+    .eq("id", id)
+    .maybeSingle<
+      InstrumentLu & {
+        portee_max: string;
+        echelon: string;
+        millesime: number | null;
+        emplacement: string | null;
+        motif_statut: string | null;
+        intervention_instrument: {
+          intervention: { id: string; numero: string; type: TypeIntervention; statut: StatutIntervention; recue_le: string } | null;
+        }[];
+      }
+    >();
+  if (error) return echec(error);
+  if (!data) return { ok: true, donnees: null };
+
+  const doubles = await supabase
+    .from("instrument")
+    .select("id, numero, reference_provisoire")
+    .eq("numero_serie", data.numero_serie)
+    .neq("id", id)
+    .returns<{ id: string; numero: string | null; reference_provisoire: string | null }[]>();
+  if (doubles.error) return echec(doubles.error);
+
+  return {
+    ok: true,
+    donnees: {
+      ...resume(data),
+      portee_max: data.portee_max,
+      echelon: data.echelon,
+      millesime: data.millesime,
+      emplacement: data.emplacement,
+      motifStatut: data.motif_statut,
+      siteId: data.site?.id ?? "",
+      interventions: data.intervention_instrument
+        .flatMap((ii) => (ii.intervention ? [ii.intervention] : []))
+        .map((i) => ({ id: i.id, numero: i.numero, type: i.type, statut: i.statut, recueLe: new Date(i.recue_le) }))
+        .sort((a, b) => b.recueLe.getTime() - a.recueLe.getTime()),
+      memeNumeroSerie: doubles.data.map((d) => ({ id: d.id, numero: d.numero ?? d.reference_provisoire ?? "" })),
     },
   };
 }

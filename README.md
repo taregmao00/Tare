@@ -60,8 +60,9 @@ Comptes : `karim@exemple.fr` (technicien habilité), `lucas@exemple.fr` (technic
 - **Appli** : lint, tests (`npm test`), construction ;
 - **Base** : les migrations sont rejouées sur un Postgres vierge, puis `supabase/tests/verrous.sql`
   (journal en ajout seul, bon signé verrouillé…) et `supabase/tests/cloisonnement.sql` (qui voit quoi,
-  rôle par rôle, sur chaque table) et `supabase/tests/ecritures_parc.sql` (qui peut créer et modifier
-  clients, sites et instruments).
+  rôle par rôle, sur chaque table), `supabase/tests/ecritures_parc.sql` (qui peut créer et modifier
+  clients, sites et instruments) et `supabase/tests/alerte_double.sql` (alerte « instrument en double
+  possible » créée par la base).
 
 Une croix rouge sur GitHub = un essai a échoué ; le message indique lequel.
 Pour lancer les essais de la base sur un PC qui a Postgres : `bash supabase/tests/lancer.sh`

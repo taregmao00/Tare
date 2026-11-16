@@ -2,16 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { decoderFichier, lireCsv } from "@/lib/csv";
 import { echecFormulaire, MESSAGE_CHAMPS, saisieDe, type EtatFormulaire } from "@/lib/formulaire";
 import {
   controlerClient,
   controlerFicheInstrument,
+  controlerImportInstruments,
   controlerNouvelInstrument,
   controlerSite,
   jourParis,
   peutGererParc,
 } from "@/lib/regles";
+import { lireParcPourImport } from "@/lib/supabase/parc";
 import { session, type ClientSupabase, type UtilisateurCourant } from "@/lib/supabase/utilisateur-courant";
+import { ETAT_IMPORT_INITIAL, TAILLE_MAX_FICHIER, type EtatImport } from "./instruments/import/etat";
 
 /**
  * Enregistrement des clients, des sites et des instruments. Le contrôle fait ici sert à expliquer un refus en
@@ -152,4 +156,75 @@ export async function modifierInstrument(id: string, _etat: EtatFormulaire, form
 
   revalidatePath("/parc", "layout");
   redirect(`/parc/instruments/${id}`);
+}
+
+/**
+ * Import d'instruments depuis un fichier CSV, en deux temps (voir EtatImport) : d'abord le
+ * contrôle de toutes les lignes sans rien enregistrer, puis, à la confirmation, un nouveau
+ * contrôle complet et l'enregistrement de toutes les lignes d'un seul coup (tout ou rien).
+ */
+export async function importerInstruments(_etat: EtatImport, formulaire: FormData): Promise<EtatImport> {
+  const arret = (erreur: string): EtatImport => ({ ...ETAT_IMPORT_INITIAL, erreur });
+
+  const acces = await gestionnaireDuParc();
+  if ("refus" in acces) return arret(acces.refus);
+  const { supabase, utilisateur } = acces;
+
+  // 1. Le texte du fichier : envoyé à l'instant, ou renvoyé tel quel pour la confirmation.
+  const confirmer = formulaire.get("confirmer") === "oui";
+  let contenu = "";
+  let nomFichier = "";
+  if (confirmer) {
+    contenu = String(formulaire.get("contenu") ?? "");
+    nomFichier = String(formulaire.get("nom_fichier") ?? "");
+  } else {
+    const fichier = formulaire.get("fichier");
+    if (!(fichier instanceof File) || fichier.size === 0) return arret("Choisissez d'abord un fichier CSV.");
+    if (fichier.size > TAILLE_MAX_FICHIER) {
+      return arret("Ce fichier est trop gros pour un seul envoi. Découpez-le en plusieurs fichiers.");
+    }
+    contenu = decoderFichier(new Uint8Array(await fichier.arrayBuffer()));
+    nomFichier = fichier.name;
+  }
+  if (contenu.length > TAILLE_MAX_FICHIER) return arret("Ce fichier est trop gros pour un seul envoi.");
+
+  // 2. Le contrôle, toujours refait en entier : le parc a pu changer depuis l'aperçu.
+  const lecture = lireCsv(contenu);
+  if (!lecture.ok) return arret(lecture.erreur);
+  const parc = await lireParcPourImport(supabase);
+  if (!parc.ok) {
+    console.error(`[parc] import : lecture du parc impossible (${parc.code}) : ${parc.detail}`);
+    return arret("Le parc n'a pas pu être lu. Vérifiez le réseau et réessayez.");
+  }
+  const { rapport, aEnregistrer } = controlerImportInstruments(lecture.lignes, parc.donnees, jourParis(new Date()));
+  if (rapport.erreur) return arret(rapport.erreur);
+
+  const apercu: EtatImport = { etape: "rapport", erreur: null, nomFichier, contenu, rapport, resultat: null };
+  if (!confirmer) return apercu;
+  if (aEnregistrer.length === 0) {
+    return { ...apercu, erreur: "Rien n'a été enregistré : le fichier contient maintenant des erreurs (le parc a changé entre-temps)." };
+  }
+
+  // 3. L'enregistrement : une seule demande à la base, donc toutes les lignes ou aucune.
+  //    Les numéros INS-xxxx et les alertes de double sont créés par la base.
+  const { data, error } = await supabase
+    .from("instrument")
+    .insert(aEnregistrer.map((valeurs) => ({ id: crypto.randomUUID(), entreprise_id: utilisateur.entrepriseId, ...valeurs })))
+    .select("numero")
+    .returns<{ numero: string }[]>();
+  if (error) return { ...apercu, erreur: `Rien n'a été enregistré. ${messageRefusBase("import d'instruments", error)}` };
+
+  const numeros = data.map((i) => i.numero).sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+  revalidatePath("/parc", "layout");
+  return {
+    ...ETAT_IMPORT_INITIAL,
+    etape: "termine",
+    nomFichier,
+    resultat: {
+      nombre: numeros.length,
+      premier: numeros[0] ?? "",
+      dernier: numeros.at(-1) ?? "",
+      doubles: rapport.nombreAvertissements,
+    },
+  };
 }

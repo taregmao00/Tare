@@ -661,3 +661,42 @@ a {
 .formulaire .echeance > .aide {
   font-size: 0.875rem;
 }
+
+/* ---------------------------------------------------------------------------
+   Import CSV des instruments : rapport de contrôle.
+   --------------------------------------------------------------------------- */
+.succes {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--ok-fond);
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.rapport-import {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rapport-import .carte .erreur,
+.rapport-import .carte .avertissement {
+  font-size: 0.9375rem;
+}
+
+.rapport-import details > .liste {
+  margin-top: 10px;
+}
+
+.aide-import ul {
+  margin: 8px 0 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formulaire input[type="file"] {
+  padding: 10px 12px;
+  height: auto;
+}

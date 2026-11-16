@@ -1,4 +1,5 @@
 import type {
+  ClientConnu,
   MoisCalendaire,
   ReglagesDeplacement,
   StatutIntervention,
@@ -298,7 +299,9 @@ export async function lireInstrument(supabase: ClientSupabase, id: string): Prom
   const doubles = await supabase
     .from("instrument")
     .select("id, numero, reference_provisoire")
-    .eq("numero_serie", data.numero_serie)
+    // Comme l'alerte créée par la base : les majuscules ne comptent pas. Les caractères « \ »,
+    // « % » et « _ » sont neutralisés pour être cherchés tels quels.
+    .ilike("numero_serie", data.numero_serie.replace(/[\\%_]/g, "\\$&"))
     .neq("id", id)
     .returns<{ id: string; numero: string | null; reference_provisoire: string | null }[]>();
   if (doubles.error) return echec(doubles.error);
@@ -319,5 +322,42 @@ export async function lireInstrument(supabase: ClientSupabase, id: string): Prom
         .sort((a, b) => b.recueLe.getTime() - a.recueLe.getTime()),
       memeNumeroSerie: doubles.data.map((d) => ({ id: d.id, numero: d.numero ?? d.reference_provisoire ?? "" })),
     },
+  };
+}
+
+/**
+ * Ce que l'import CSV a besoin de connaître : les clients, leurs sites, et les n° de série déjà
+ * présents sur chaque site. La base ne renvoie que les agences visibles par l'utilisateur.
+ */
+export async function lireParcPourImport(supabase: ClientSupabase): Promise<Lecture<ClientConnu[]>> {
+  const { data, error } = await supabase
+    .from("client")
+    .select(`id, nom, ${LIEN_SITES}(id, nom, ${LIEN_INSTRUMENTS}(numero, reference_provisoire, numero_serie))`)
+    .returns<
+      {
+        id: string;
+        nom: string;
+        site: {
+          id: string;
+          nom: string;
+          instrument: { numero: string | null; reference_provisoire: string | null; numero_serie: string }[];
+        }[];
+      }[]
+    >();
+  if (error) return echec(error);
+  return {
+    ok: true,
+    donnees: data.map((c) => ({
+      id: c.id,
+      nom: c.nom,
+      sites: c.site.map((s) => ({
+        id: s.id,
+        nom: s.nom,
+        instruments: s.instrument.map((i) => ({
+          numero: i.numero ?? i.reference_provisoire ?? "",
+          numeroSerie: i.numero_serie,
+        })),
+      })),
+    })),
   };
 }

@@ -16,6 +16,7 @@ Module unique des règles métier. Uniquement des **fonctions pures** (pas d'acc
 | `interventions.ts` | §6.1 : ordre de la liste, statut affiché (« En cours » / « En pause »), urgence |
 | `roles.ts` | §4 et §7 : rôles, qui gère le parc, onglets selon le rôle |
 | `parc.ts` | §5 : contrôle de la saisie d'un client, d'un site et d'un instrument (champs obligatoires, vignette, échéance) |
+| `import-instruments.ts` | Import CSV des instruments : contrôle ligne par ligne, tout ou rien, n° de série déjà connus (la lecture du fichier lui-même est dans `lib/csv.ts`) |
 
 Montants en **centimes entiers**. Instants en `Date` (UTC), jours en texte `AAAA-MM-JJ` (Paris).
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ajouterJours, instantParis, jourParis } from "./dates";
+import { ajouterJours, formaterMois, instantParis, jourParis } from "./dates";
 
 describe("jours et heures de Paris", () => {
   it("ajoute ou retire des jours, en passant les fins de mois et d'année", () => {
@@ -34,5 +34,11 @@ describe("jours et heures de Paris", () => {
   it("refuse une heure mal écrite", () => {
     expect(() => instantParis("2026-11-09", "7h52")).toThrow();
     expect(() => instantParis("2026-11-09", "24:00")).toThrow();
+  });
+
+  it("affiche un mois comme sur la vignette", () => {
+    expect(formaterMois("2027-11")).toBe("11/2027");
+    expect(formaterMois("2026-03")).toBe("03/2026");
+    expect(() => formaterMois("2026-13")).toThrow();
   });
 });

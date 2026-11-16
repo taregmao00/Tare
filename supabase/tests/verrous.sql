@@ -24,10 +24,10 @@ insert into client (id, entreprise_id, agence_id, nom, critique) values
 insert into site (id, entreprise_id, client_id, nom, distance_km, contact_email) values
  ('50000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000001','Magasin',3,'contact@exemple.fr'),
  ('50000000-0000-0000-0000-000000000002','e0000000-0000-0000-0000-000000000001','c0000000-0000-0000-0000-000000000001','Entrepôt',5,null);
-insert into instrument (id, entreprise_id, site_id, numero, type, marque, numero_serie, statut_metrologie, echeance_verification) values
- ('10000000-0000-0000-0000-000000000802','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0802','Balance poids-prix','Tarvex','TX-1','verte','2026-11'),
- ('10000000-0000-0000-0000-000000000803','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0803','Balance poids-prix','Balix','BX-1','verte','2026-12'),
- ('10000000-0000-0000-0000-000000000900','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000002','INS-0900','Plateforme','Balix','BX-9','a_verifier',null);
+insert into instrument (id, entreprise_id, site_id, numero, type, marque, numero_serie, statut_metrologie, echeance_verification, modele, portee_max, echelon) values
+ ('10000000-0000-0000-0000-000000000802','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0802','Balance poids-prix','Tarvex','TX-1','verte','2026-11','C15','15 kg','5 g'),
+ ('10000000-0000-0000-0000-000000000803','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','INS-0803','Balance poids-prix','Balix','BX-1','verte','2026-12','C15','15 kg','5 g'),
+ ('10000000-0000-0000-0000-000000000900','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000002','INS-0900','Plateforme','Balix','BX-9','a_verifier',null,'P300','300 kg','100 g');
 insert into intervention (id, entreprise_id, agence_id, numero, type, client_id, site_id, statut, titulaire_id) values
  ('d0000000-0000-0000-0000-000000000001','e0000000-0000-0000-0000-000000000001','a0000000-0000-0000-0000-000000000001','INT-0001','verification','c0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','en_cours','00000000-0000-0000-0000-0000000000a1');
 insert into intervention_instrument (intervention_id, instrument_id, entreprise_id, site_id) values
@@ -55,9 +55,13 @@ select pg_temp.doit_echouer('échéance au format 11/2027',
 select pg_temp.doit_passer('échéance 2027-11',
  $q$update instrument set echeance_verification='2027-11' where numero='INS-0802'$q$);
 select pg_temp.doit_passer('instrument créé hors ligne (référence provisoire) avec n° de série en double',
- $q$insert into instrument (entreprise_id, site_id, reference_provisoire, type, numero_serie) values ('e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','PROV-tel1-20261109T1000','Balance','TX-1')$q$);
-select pg_temp.doit_echouer('instrument sans numéro ni référence',
- $q$insert into instrument (entreprise_id, site_id, type) values ('e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','Balance')$q$);
+ $q$insert into instrument (entreprise_id, site_id, reference_provisoire, type, marque, modele, numero_serie, portee_max, echelon) values ('e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','PROV-tel1-20261109T1000','Balance','Tarvex','C15','TX-1','15 kg','5 g')$q$);
+select pg_temp.doit_passer('le serveur lui a attribué le numéro suivant (INS-0901)',
+ $q$do $d$ begin if (select numero from instrument where reference_provisoire = 'PROV-tel1-20261109T1000') is distinct from 'INS-0901' then raise exception 'numéro inattendu'; end if; end $d$$q$);
+select pg_temp.doit_echouer('instrument sans marque',
+ $q$insert into instrument (entreprise_id, site_id, type, modele, numero_serie, portee_max, echelon) values ('e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','Balance','C15','TX-2','15 kg','5 g')$q$);
+select pg_temp.doit_echouer('instrument avec un n° de série vide',
+ $q$insert into instrument (entreprise_id, site_id, type, marque, modele, numero_serie, portee_max, echelon) values ('e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001','Balance','Tarvex','C15','  ','15 kg','5 g')$q$);
 select pg_temp.doit_passer('retrait d''un instrument avant signature',
  $q$delete from intervention_instrument where instrument_id='10000000-0000-0000-0000-000000000803'; insert into intervention_instrument (intervention_id, instrument_id, entreprise_id, site_id) values ('d0000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000803','e0000000-0000-0000-0000-000000000001','50000000-0000-0000-0000-000000000001')$q$);
 

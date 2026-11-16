@@ -366,7 +366,7 @@ La barre du chrono actif s'affiche au-dessus de la navigation (temps, montant, P
 
 ## 11. Données fictives de démonstration
 
-Utiliser les mêmes jeux que le prototype : 4 utilisateurs (Karim B. technicien habilité, Lucas M. technicien non habilité, Sophie R. cheffe d'agence habilitée, Nadia G. gestionnaire au siège), 6 clients (Carrière Ferrand, Fromagerie des Causses, Boulangerie Arnal, Coopérative Saint-Clair, Primeurs Dubois, Pharmacie du Marché) avec leurs distances (18, 32, 4, 24, 3, 3 km), 8 instruments `INS-0421` à `INS-0910` (l'intervention de vérification chez Primeurs Dubois porte sur **les deux** balances INS-0802 et INS-0803), catalogue de 3 articles :
+Utiliser les mêmes jeux que le prototype : 4 utilisateurs (Karim B. technicien habilité, Lucas M. technicien non habilité, Sophie R. cheffe d'agence habilitée, Nadia G. gestionnaire au siège), plus un 5e compte ajouté pour les essais (Claire D., administratrice, sans agence), 6 clients (Carrière Ferrand, Fromagerie des Causses, Boulangerie Arnal, Coopérative Saint-Clair, Primeurs Dubois, Pharmacie du Marché) avec leurs distances (18, 32, 4, 24, 3, 3 km), 8 instruments `INS-0421` à `INS-0910` (l'intervention de vérification chez Primeurs Dubois porte sur **les deux** balances INS-0802 et INS-0803), catalogue de 3 articles :
 
 | Code | Désignation | Prix HT |
 | --- | --- | --- |
@@ -380,7 +380,7 @@ Marques fictives : Tarvex, Balix. Téléphones au format `06 00 00 00 0X`. Email
 
 ## 12. Questions ouvertes (ne pas trancher seul)
 
-- Champs obligatoires de la fiche instrument (millésime et autres).
+- ~~Champs obligatoires de la fiche instrument~~ : tranché le 12/11/2026 → type, marque, modèle, n° de série, portée et échelon obligatoires ; millésime et emplacement facultatifs.
 - Documents métrologiques à produire et durée de conservation.
 - Format du fichier de références fourni par les clients.
 - Périodicité réglementaire par type d'instrument (après la V1).

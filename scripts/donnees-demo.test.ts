@@ -10,6 +10,7 @@ const contexte = (maintenant: string, entrepriseId = "e0000000-0000-0000-0000-00
     lucas: "00000000-0000-0000-0000-00000000000b",
     sophie: "00000000-0000-0000-0000-00000000000c",
     nadia: "00000000-0000-0000-0000-00000000000d",
+    claire: "00000000-0000-0000-0000-00000000000e",
   },
   reglages: {
     tauxHoraireCentimes: 6500,
@@ -31,12 +32,13 @@ const MAINTENANT = "2026-11-10T09:30:00Z";
 const lots = construireDemo(contexte(MAINTENANT));
 
 describe("données de démonstration (§11)", () => {
-  it("4 utilisateurs : Karim et Sophie habilités, Nadia gestionnaire sans agence", () => {
+  it("5 utilisateurs : Karim et Sophie habilités, Nadia gestionnaire et Claire administratrice sans agence", () => {
     expect(UTILISATEURS_DEMO.map((u) => [u.nom, u.role, u.habilite, u.avecAgence])).toEqual([
       ["Karim B.", "technicien", true, true],
       ["Lucas M.", "technicien", false, true],
       ["Sophie R.", "chef_agence", true, true],
       ["Nadia G.", "gestionnaire", false, false],
+      ["Claire D.", "administrateur", false, false],
     ]);
   });
 

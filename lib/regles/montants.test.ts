@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculerMainOeuvre } from "./main-oeuvre";
 import { forfaitDeplacement } from "./deplacement";
-import { diviserArrondi, montantLigne, totalBon } from "./montants";
+import { diviserArrondi, formaterEuros, montantLigne, totalBon } from "./montants";
 
 describe("arrondi au centime (§6.6)", () => {
   it("0,5 centime arrondi au-dessus, en dessous arrondi en dessous", () => {
@@ -43,5 +43,16 @@ describe("total du bon", () => {
       petitMaterielCentimes: 850,
       totalHtCentimes: 13700,
     });
+  });
+});
+
+describe("affichage d'un montant", () => {
+  it("centimes → euros à la française", () => {
+    // Les espaces insécables du format français sont ramenés à des espaces simples pour comparer.
+    const lisible = (centimes: number) => formaterEuros(centimes).replace(/\s/g, " ");
+    expect(lisible(5000)).toBe("50,00 €");
+    expect(lisible(13700)).toBe("137,00 €");
+    expect(lisible(450)).toBe("4,50 €");
+    expect(lisible(123456)).toBe("1 234,56 €");
   });
 });

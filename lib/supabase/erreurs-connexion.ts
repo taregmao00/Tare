@@ -5,6 +5,8 @@
  * Fonctions pures (aucun accès réseau), testées dans erreurs-connexion.test.ts.
  */
 
+import { MESSAGE_RESEAU } from "../formulaire.ts";
+
 export type CasConnexion =
   | "identifiants"
   | "compte_non_confirme"
@@ -21,7 +23,7 @@ export const MESSAGES_CONNEXION: Record<CasConnexion, string> = {
   compte_desactive:
     "Ce compte est désactivé ou n'est rattaché à aucune entreprise. Contactez l'administrateur de votre entreprise.",
   trop_de_tentatives: "Trop de tentatives. Patientez une minute, puis réessayez.",
-  reseau: "Pas de réseau. Vérifiez votre connexion (Wi-Fi ou données mobiles), puis réessayez.",
+  reseau: MESSAGE_RESEAU,
   service_injoignable:
     "Le service de connexion ne répond pas. Réessayez dans un instant ; si cela dure, prévenez l'administrateur.",
   configuration:

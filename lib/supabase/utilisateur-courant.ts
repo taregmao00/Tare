@@ -1,13 +1,6 @@
+import { cache } from "react";
+import type { Role } from "@/lib/regles";
 import { supabaseServeur } from "./serveur";
-
-export type Role = "technicien" | "chef_agence" | "gestionnaire" | "administrateur";
-
-export const LIBELLES_ROLE: Record<Role, string> = {
-  technicien: "Technicien",
-  chef_agence: "Chef d'agence",
-  gestionnaire: "Gestionnaire",
-  administrateur: "Administrateur",
-};
 
 export interface UtilisateurCourant {
   id: string;
@@ -15,7 +8,10 @@ export interface UtilisateurCourant {
   email: string;
   role: Role;
   habiliteVerifications: boolean;
+  entrepriseId: string;
   entreprise: string;
+  /** Vide pour un gestionnaire ou un administrateur sans agence : ils voient toutes les agences. */
+  agenceId: string | null;
   agence: string | null;
 }
 
@@ -27,6 +23,7 @@ export type ClientSupabase = Awaited<ReturnType<typeof supabaseServeur>>;
  * - `"sans_fiche"` : compte de connexion qui n'est rattaché à aucune entreprise (ou désactivé).
  *
  * `supabase` : à fournir quand on vient juste de se connecter avec ce client (action de connexion).
+ * Dans une page, préférer `session()`, qui ne lit la fiche qu'une fois par requête.
  */
 export async function utilisateurCourant(
   supabase?: ClientSupabase,
@@ -40,7 +37,7 @@ export async function utilisateurCourant(
 
   const { data, error } = await supabase
     .from("utilisateur")
-    .select("id, nom, email, role, habilite_verifications, entreprise(nom), agence(nom)")
+    .select("id, nom, email, role, habilite_verifications, entreprise_id, agence_id, entreprise(nom), agence(nom)")
     .eq("id", id)
     .eq("actif", true)
     .maybeSingle<{
@@ -49,6 +46,8 @@ export async function utilisateurCourant(
       email: string;
       role: Role;
       habilite_verifications: boolean;
+      entreprise_id: string;
+      agence_id: string | null;
       entreprise: { nom: string } | null;
       agence: { nom: string } | null;
     }>();
@@ -64,7 +63,18 @@ export async function utilisateurCourant(
     email: data.email,
     role: data.role,
     habiliteVerifications: data.habilite_verifications,
+    entrepriseId: data.entreprise_id,
     entreprise: data.entreprise.nom,
+    agenceId: data.agence_id,
     agence: data.agence?.nom ?? null,
   };
 }
+
+/**
+ * La connexion à Supabase et l'utilisateur de la requête en cours, lus une seule fois même si
+ * plusieurs morceaux de la page (barre d'onglets, contenu) en ont besoin.
+ */
+export const session = cache(async () => {
+  const supabase = await supabaseServeur();
+  return { supabase, utilisateur: await utilisateurCourant(supabase) };
+});

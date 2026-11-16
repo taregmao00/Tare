@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { echecFormulaire, type EtatFormulaire } from "@/lib/formulaire";
 import { examinerConfigSupabase } from "@/lib/supabase/config";
 import {
   classerErreurConnexion,
@@ -11,28 +12,24 @@ import {
 import { supabaseServeur } from "@/lib/supabase/serveur";
 import { utilisateurCourant } from "@/lib/supabase/utilisateur-courant";
 
-export interface EtatConnexion {
-  erreur: string | null;
-  email: string;
-}
-
 /**
  * Connexion par email + mot de passe (pas d'inscription : comptes créés par l'administrateur).
  * L'écran reçoit un message simple ; la vraie cause est écrite dans le terminal du serveur
  * (code d'erreur Supabase), sans jamais y mettre de clé ni de mot de passe.
  */
-export async function seConnecter(_etat: EtatConnexion, formulaire: FormData): Promise<EtatConnexion> {
+export async function seConnecter(_etat: EtatFormulaire, formulaire: FormData): Promise<EtatFormulaire> {
   const email = String(formulaire.get("email") ?? "").trim().toLowerCase();
   const motDePasse = String(formulaire.get("mot_de_passe") ?? "");
 
-  if (!email || !motDePasse) {
-    return { erreur: "Saisissez votre email et votre mot de passe.", email };
-  }
+  // Seul l'email est renvoyé à l'écran : le mot de passe n'y retourne jamais.
+  const refuser = (message: string) => echecFormulaire(message, { email });
+
+  if (!email || !motDePasse) return refuser("Saisissez votre email et votre mot de passe.");
 
   const config = examinerConfigSupabase();
   if (!config.ok) {
     console.error(`[connexion] Configuration Supabase incorrecte : ${config.probleme}`);
-    return { erreur: MESSAGES_CONNEXION.configuration, email };
+    return refuser(MESSAGES_CONNEXION.configuration);
   }
 
   const supabase = await supabaseServeur();
@@ -47,7 +44,7 @@ export async function seConnecter(_etat: EtatConnexion, formulaire: FormData): P
   if (echec) {
     const diagnostic = classerErreurConnexion(echec);
     console.error(ligneJournalConnexion(echec, diagnostic));
-    return { erreur: diagnostic.message, email };
+    return refuser(diagnostic.message);
   }
 
   // Le compte de connexion est bon : a-t-il aussi une fiche active dans une entreprise ?
@@ -60,7 +57,7 @@ export async function seConnecter(_etat: EtatConnexion, formulaire: FormData): P
         "[connexion] Piste : les fichiers de supabase/migrations/ ont-ils tous été appliqués, dans l'ordre, sur ce projet ?",
     );
     await supabase.auth.signOut();
-    return { erreur: MESSAGES_CONNEXION.configuration, email };
+    return refuser(MESSAGES_CONNEXION.configuration);
   }
   if (fiche === null || fiche === "sans_fiche") {
     console.error(
@@ -69,7 +66,7 @@ export async function seConnecter(_etat: EtatConnexion, formulaire: FormData): P
         "[connexion] Piste : relancer « npm run demo » pour les comptes de démonstration.",
     );
     await supabase.auth.signOut();
-    return { erreur: MESSAGES_CONNEXION.compte_desactive, email };
+    return refuser(MESSAGES_CONNEXION.compte_desactive);
   }
 
   redirect("/");

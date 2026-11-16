@@ -33,21 +33,23 @@ import {
 export const NOM_ENTREPRISE_DEMO = "Pesage Démo";
 export const AGENCE_DEMO = { nom: "Agence de Villeneuve", adresse: "1 avenue de la Bascule, Villeneuve" };
 
-export type CleUtilisateur = "karim" | "lucas" | "sophie" | "nadia";
+export type CleUtilisateur = "karim" | "lucas" | "sophie" | "nadia" | "claire";
 
 export const UTILISATEURS_DEMO: {
   cle: CleUtilisateur;
   email: string;
   nom: string;
-  role: "technicien" | "chef_agence" | "gestionnaire";
+  role: "technicien" | "chef_agence" | "gestionnaire" | "administrateur";
   habilite: boolean;
-  /** Nadia G., gestionnaire au siège, n'a pas d'agence : elle voit toutes les agences. */
+  /** Nadia G. (gestionnaire) et Claire D. (administratrice) n'ont pas d'agence : elles voient toutes les agences. */
   avecAgence: boolean;
 }[] = [
   { cle: "karim", email: "karim@exemple.fr", nom: "Karim B.", role: "technicien", habilite: true, avecAgence: true },
   { cle: "lucas", email: "lucas@exemple.fr", nom: "Lucas M.", role: "technicien", habilite: false, avecAgence: true },
   { cle: "sophie", email: "sophie@exemple.fr", nom: "Sophie R.", role: "chef_agence", habilite: true, avecAgence: true },
   { cle: "nadia", email: "nadia@exemple.fr", nom: "Nadia G.", role: "gestionnaire", habilite: false, avecAgence: false },
+  // Compte ajouté le 12/11/2026 pour pouvoir essayer le rôle d'administrateur (toutes les agences).
+  { cle: "claire", email: "claire@exemple.fr", nom: "Claire D.", role: "administrateur", habilite: false, avecAgence: false },
 ];
 
 const ARTICLES = [

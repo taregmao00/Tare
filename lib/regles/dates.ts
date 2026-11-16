@@ -101,6 +101,12 @@ function decomposerMois(mois: MoisCalendaire): [number, number] {
   return [Number(m[1]), Number(m[2])];
 }
 
+/** Mois tel qu'on l'affiche, comme sur la vignette : "2027-11" → "11/2027". */
+export function formaterMois(mois: MoisCalendaire): string {
+  const [a, mo] = decomposerMois(mois);
+  return `${String(mo).padStart(2, "0")}/${a}`;
+}
+
 /** Le mois d'un jour : "2026-11-07" → "2026-11". */
 export function moisDe(jour: JourCalendaire): MoisCalendaire {
   decomposer(jour);

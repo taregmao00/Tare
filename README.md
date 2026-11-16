@@ -28,10 +28,11 @@ Dans Supabase → SQL Editor, coller puis exécuter chaque fichier **dans cet or
 1. `20261109120000_entreprise_agence_utilisateur.sql` (séance 5)
 2. `20261109130000_tables_metier.sql` (séance 6)
 3. `20261110090000_cloisonnement_lecture.sql` (séance 7 : qui voit quoi)
+4. `20261112090000_ecriture_clients_sites_instruments.sql` (phase 2, bloc 1 : qui peut créer et modifier clients, sites, instruments)
 
 ### Données de démonstration
 
-Les 4 comptes, 6 clients, 8 instruments, le catalogue et les 9 interventions du prototype (CLAUDE.md §11).
+Les 5 comptes, 6 clients, 8 instruments, le catalogue et les 9 interventions du prototype (CLAUDE.md §11).
 
 1. Copier `.env.admin.example` en `.env.admin` et le remplir : clé **secrète** du projet `tare-dev`
    et mot de passe commun des comptes de démonstration. Ce fichier reste sur le PC : jamais sur GitHub,
@@ -39,11 +40,11 @@ Les 4 comptes, 6 clients, 8 instruments, le catalogue et les 9 interventions du 
 2. Lancer `npm run demo`.
 
 Le script peut être relancé autant de fois qu'on veut : ce qui existe déjà est gardé tel quel, seul ce qui
-manque est créé, rien n'est supprimé. Il confirme les 4 comptes et leur donne le mot de passe de démonstration.
+manque est créé, rien n'est supprimé. Il confirme les 5 comptes et leur donne le mot de passe de démonstration.
 Il refuse de tourner sur une base qui contient des comptes hors `@exemple.fr`.
 
 Comptes : `karim@exemple.fr` (technicien habilité), `lucas@exemple.fr` (technicien), `sophie@exemple.fr`
-(cheffe d'agence), `nadia@exemple.fr` (gestionnaire, toutes les agences).
+(cheffe d'agence), `nadia@exemple.fr` (gestionnaire, toutes les agences), `claire@exemple.fr` (administratrice, toutes les agences).
 
 ### La connexion ne marche pas ?
 
@@ -59,7 +60,8 @@ Comptes : `karim@exemple.fr` (technicien habilité), `lucas@exemple.fr` (technic
 - **Appli** : lint, tests (`npm test`), construction ;
 - **Base** : les migrations sont rejouées sur un Postgres vierge, puis `supabase/tests/verrous.sql`
   (journal en ajout seul, bon signé verrouillé…) et `supabase/tests/cloisonnement.sql` (qui voit quoi,
-  rôle par rôle, sur chaque table).
+  rôle par rôle, sur chaque table) et `supabase/tests/ecritures_parc.sql` (qui peut créer et modifier
+  clients, sites et instruments).
 
 Une croix rouge sur GitHub = un essai a échoué ; le message indique lequel.
 Pour lancer les essais de la base sur un PC qui a Postgres : `bash supabase/tests/lancer.sh`

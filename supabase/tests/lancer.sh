@@ -19,7 +19,7 @@ case "${PGHOST:-localhost}" in
 esac
 
 migrations=(supabase/migrations/*.sql)
-essais=(supabase/tests/verrous.sql supabase/tests/cloisonnement.sql)
+essais=(supabase/tests/verrous.sql supabase/tests/cloisonnement.sql supabase/tests/ecritures_parc.sql)
 echecs=0
 
 for essai in "${essais[@]}"; do

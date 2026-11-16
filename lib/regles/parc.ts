@@ -23,6 +23,14 @@ function texte(valeur: string | undefined): string | null {
   return propre === "" ? null : propre;
 }
 
+/** Pour comparer ou chercher sans se soucier des majuscules ni des accents (« Carrière » = « carriere »). */
+export function simplifierTexte(valeur: string): string {
+  return valeur
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
 /** Vérifie un texte : obligatoire ou non, et longueur maximale. Note l'erreur s'il y en a une. */
 function champTexte(
   saisie: Saisie,

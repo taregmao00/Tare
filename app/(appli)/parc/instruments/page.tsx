@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
 import { Ecran, ErreurLecture, SansAcces, Vide } from "@/app/_composants/etats";
-import { jourParis } from "@/lib/regles";
+import { jourParis, peutGererParc, simplifierTexte } from "@/lib/regles";
 import { listerInstruments } from "@/lib/supabase/parc";
 import { session } from "@/lib/supabase/utilisateur-courant";
 import { SousOnglets, Vignette } from "../affichage";
@@ -17,13 +17,6 @@ export default function Instruments(proprietes: PageProps<"/parc/instruments">) 
   );
 }
 
-/** Pour chercher sans se soucier des majuscules ni des accents. */
-const simplifier = (texte: string) =>
-  texte
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-
 /** Tous les instruments de l'agence, avec une recherche par n° d'instrument, client ou n° de série (§7). */
 async function Contenu({ searchParams }: PageProps<"/parc/instruments">) {
   const { q } = await searchParams;
@@ -33,17 +26,24 @@ async function Contenu({ searchParams }: PageProps<"/parc/instruments">) {
 
   const instruments = await listerInstruments(supabase);
   const aujourdhui = jourParis(new Date());
-  const mots = simplifier(recherche).split(/\s+/).filter(Boolean);
+  const mots = simplifierTexte(recherche).split(/\s+/).filter(Boolean);
   const trouves = instruments.ok
     ? instruments.donnees.filter((i) => {
-        const fiche = simplifier(`${i.numero} ${i.numeroSerie} ${i.client} ${i.site} ${i.type} ${i.marque} ${i.modele}`);
+        const fiche = simplifierTexte(`${i.numero} ${i.numeroSerie} ${i.client} ${i.site} ${i.type} ${i.marque} ${i.modele}`);
         return mots.every((mot) => fiche.includes(mot));
       })
     : [];
 
   return (
     <>
-      <h1 className="titre-page">Parc</h1>
+      <div className="ligne-entre">
+        <h1 className="titre-page">Parc</h1>
+        {peutGererParc(utilisateur.role) && (
+          <Link href="/parc/instruments/import" className="bouton-action">
+            Importer un fichier
+          </Link>
+        )}
+      </div>
       <SousOnglets actif="instruments" />
 
       <Form action="/parc/instruments" className="recherche" role="search">

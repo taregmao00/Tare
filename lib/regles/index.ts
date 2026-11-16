@@ -9,3 +9,4 @@ export * from "./horloge.ts";
 export * from "./interventions.ts";
 export * from "./roles.ts";
 export * from "./parc.ts";
+export * from "./import-instruments.ts";

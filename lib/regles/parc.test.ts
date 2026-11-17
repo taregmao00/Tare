@@ -8,7 +8,7 @@ import {
   limitesEcheanceEnregistrement,
   moisDansLimites,
 } from "./parc";
-import { ongletsPour, peutGererParc } from "./roles";
+import { ongletsPour, peutGererParc, peutModifierReglages, peutSaisirReference } from "./roles";
 
 describe("saisie d'un client", () => {
   it("accepte un nom, nettoie les espaces, note facultative", () => {
@@ -101,6 +101,11 @@ describe("rôles (§4 et §7)", () => {
     expect(peutGererParc("administrateur")).toBe(true);
     expect(peutGererParc("technicien")).toBe(false);
     expect(peutGererParc("gestionnaire")).toBe(false);
+  });
+
+  it("référence externe : tous sauf le gestionnaire ; réglages : l'administrateur seul", () => {
+    expect(["technicien", "chef_agence", "administrateur", "gestionnaire"].map((r) => peutSaisirReference(r as never))).toEqual([true, true, true, false]);
+    expect(["technicien", "chef_agence", "administrateur", "gestionnaire"].map((r) => peutModifierReglages(r as never))).toEqual([false, false, true, false]);
   });
 
   it("onglets : le gestionnaire n'a pas le Parc", () => {

@@ -15,7 +15,8 @@ insert into tables_essai values
   ('entreprise', false), ('agence', false), ('utilisateur', false), ('article', false),
   ('client', true), ('site', true), ('instrument', true), ('intervention', true),
   ('intervention_instrument', true), ('segment_chrono', true), ('journal', true), ('bon', true),
-  ('bon_instrument', true), ('ligne_bon', true), ('photo', true), ('alerte', true);
+  ('bon_instrument', true), ('ligne_bon', true), ('photo', true), ('alerte', true),
+  ('intervention_reference', true);
 
 -- Garde-fou : si une migration ajoute une table, elle doit être ajoutée à ces essais.
 do $$
@@ -133,13 +134,15 @@ select pg_temp.verifier('gestionnaire autre entreprise', array[1, 1, 2, 1], 1, 1
 select pg_temp.devenir(null);
 select pg_temp.verifier_aucune_ecriture('visiteur non connecté');
 select pg_temp.devenir((select id from comptes where qui = 'technicien A'));
-select pg_temp.verifier_aucune_ecriture('technicien A');
+select pg_temp.verifier_aucune_ecriture('technicien A (hors références externes)', array['intervention_reference']);
 select pg_temp.devenir((select id from comptes where qui = 'gestionnaire'));
-select pg_temp.verifier_aucune_ecriture('gestionnaire');
+-- Références externes : le droit d'écrire est accordé à tous les comptes, la règle de la base
+-- filtre ensuite (le gestionnaire ne touche aucune ligne) : vérifié dans reference_externe.sql.
+select pg_temp.verifier_aucune_ecriture('gestionnaire (hors références externes)', array['intervention_reference']);
 select pg_temp.devenir((select id from comptes where qui = 'chef d''agence A'));
-select pg_temp.verifier_aucune_ecriture('chef d''agence A (hors clients, sites, instruments)', array['client', 'site', 'instrument']);
+select pg_temp.verifier_aucune_ecriture('chef d''agence A (hors clients, sites, instruments, références externes)', array['client', 'site', 'instrument', 'intervention_reference']);
 select pg_temp.devenir((select id from comptes where qui = 'administrateur'));
-select pg_temp.verifier_aucune_ecriture('administrateur (hors clients, sites, instruments)', array['client', 'site', 'instrument']);
+select pg_temp.verifier_aucune_ecriture('administrateur (hors clients, sites, instruments, références externes)', array['client', 'site', 'instrument', 'intervention_reference']);
 
 -- Même contrôle au niveau des droits accordés (sans compter sur la RLS pour refuser).
 reset role;
@@ -148,12 +151,20 @@ declare ouvert text;
 begin
   select string_agg(r || ' → ' || t.nom, ', ') into ouvert
   from tables_essai t, unnest(array['anon', 'authenticated']) r
-  where has_table_privilege(r, 'public.' || t.nom, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+  where (t.nom <> 'intervention_reference'
+         and has_table_privilege(r, 'public.' || t.nom, 'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'))
+     or (r = 'anon' and has_table_privilege(r, 'public.' || t.nom, 'SELECT, INSERT, UPDATE, DELETE'))
      or (r = 'anon' and has_any_column_privilege(r, 'public.' || t.nom, 'SELECT, INSERT, UPDATE'))
-     or (t.nom not in ('client', 'site', 'instrument')
-         and has_any_column_privilege(r, 'public.' || t.nom, 'INSERT, UPDATE'));
+     -- Les références externes peuvent être retirées ; c'est la seule suppression ouverte.
+     or (t.nom = 'intervention_reference' and has_table_privilege(r, 'public.' || t.nom, 'TRUNCATE, REFERENCES, TRIGGER'))
+     or (t.nom not in ('client', 'site', 'instrument', 'intervention_reference', 'entreprise')
+         and has_any_column_privilege(r, 'public.' || t.nom, 'INSERT, UPDATE'))
+     -- Sur l'entreprise, seul le libellé de la référence externe s'écrit.
+     or (t.nom = 'entreprise' and (has_any_column_privilege(r, 'public.entreprise', 'INSERT')
+         or has_column_privilege(r, 'public.entreprise', 'nom', 'UPDATE')
+         or has_column_privilege(r, 'public.entreprise', 'taux_horaire_centimes', 'UPDATE')));
   if ouvert is not null then raise exception 'KO : droit(s) en trop : %', ouvert; end if;
-  raise notice 'OK : aucun droit de suppression nulle part, aucun droit d''écriture hors clients, sites et instruments, aucun droit pour le visiteur';
+  raise notice 'OK : aucune suppression hors références externes, aucune écriture hors clients, sites, instruments, références et libellé, aucun droit pour le visiteur';
 end $$;
 
 -- ---------------------------------------------------------------------------
@@ -169,7 +180,7 @@ select pg_temp.devenir(null);
 do $$
 declare f text;
 begin
-  foreach f in array array['entreprise_courante', 'agences_visibles', 'agences_alertes_visibles', 'agences_gerables'] loop
+  foreach f in array array['entreprise_courante', 'agences_visibles', 'agences_alertes_visibles', 'agences_gerables', 'agences_terrain', 'role_courant'] loop
     begin
       execute format('select public.%I()', f);
     exception when insufficient_privilege then

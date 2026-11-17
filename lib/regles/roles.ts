@@ -18,6 +18,19 @@ export function peutGererParc(role: Role): boolean {
   return role === "chef_agence" || role === "administrateur";
 }
 
+/**
+ * Saisir ou modifier la référence externe d'une intervention : technicien, chef d'agence,
+ * administrateur. Le gestionnaire la lit sans la modifier (§4 : il ne gère pas les interventions).
+ */
+export function peutSaisirReference(role: Role): boolean {
+  return role !== "gestionnaire";
+}
+
+/** Changer les réglages de l'entreprise (tarifs, libellés…) : l'administrateur seul (§4). */
+export function peutModifierReglages(role: Role): boolean {
+  return role === "administrateur";
+}
+
 export type Onglet = "interventions" | "parc" | "reglages";
 
 /**

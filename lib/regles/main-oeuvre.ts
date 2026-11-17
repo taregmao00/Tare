@@ -70,18 +70,39 @@ export interface MainOeuvre {
 }
 
 export function calculerMainOeuvre(e: EntreeMainOeuvre): MainOeuvre {
+  const minutesRetenues = e.minutesCorrigees ?? e.minutesReelles;
+  return {
+    ...mainOeuvreFacturee({
+      minutesFactureesParPersonne: minutesFactureesParPersonne(minutesRetenues),
+      nombrePersonnes: e.nombrePersonnes,
+      tauxHoraireCentimes: e.tauxHoraireCentimes,
+    }),
+    minutesRetenues,
+  };
+}
+
+/**
+ * Montant de main-d'œuvre à partir de minutes déjà arrondies (celles d'un bon signé) :
+ * minutes facturées par personne × nombre de personnes × taux horaire.
+ */
+export function mainOeuvreFacturee(e: {
+  minutesFactureesParPersonne: number;
+  nombrePersonnes: number;
+  tauxHoraireCentimes: number;
+}): MainOeuvre {
   if (!Number.isInteger(e.nombrePersonnes) || e.nombrePersonnes < 1) {
     throw new Error("Le nombre de personnes doit être un entier d'au moins 1");
   }
   if (!Number.isInteger(e.tauxHoraireCentimes) || e.tauxHoraireCentimes < 0) {
     throw new Error("Le taux horaire doit être un nombre entier de centimes");
   }
-  const minutesRetenues = e.minutesCorrigees ?? e.minutesReelles;
-  const parPersonne = minutesFactureesParPersonne(minutesRetenues);
-  const totales = parPersonne * e.nombrePersonnes;
+  if (!Number.isInteger(e.minutesFactureesParPersonne) || e.minutesFactureesParPersonne < 30 || e.minutesFactureesParPersonne % 30 !== 0) {
+    throw new Error("Les minutes facturées sont un multiple de 30, d'au moins 30");
+  }
+  const totales = e.minutesFactureesParPersonne * e.nombrePersonnes;
   return {
-    minutesRetenues,
-    minutesFactureesParPersonne: parPersonne,
+    minutesRetenues: e.minutesFactureesParPersonne,
+    minutesFactureesParPersonne: e.minutesFactureesParPersonne,
     minutesFactureesTotales: totales,
     montantCentimes: diviserArrondi(totales * e.tauxHoraireCentimes, 60),
   };

@@ -148,6 +148,20 @@ describe("données de démonstration (§11)", () => {
     expect(autre.resultat_verification).toBeNull();
   });
 
+  it("références externes : deux interventions de la Carrière Ferrand partagent la même, aucune sur la facturée", () => {
+    const interventions = table(lots, "intervention");
+    const numero = (id: string) => interventions.find((i) => i.id === id)!.numero;
+    const references = table(lots, "intervention_reference").map((r) => `${numero(r.intervention_id)} ${r.reference}`);
+    expect(references).toEqual([
+      "INT-1039 OS-2026-0412",
+      "INT-1041 OS-2026-0412",
+      "INT-1045 OS-2026-0418",
+      "INT-1046 OS-2026-0420",
+    ]);
+    const facturee = interventions.find((i) => i.statut === "facturee")!;
+    expect(table(lots, "intervention_reference").some((r) => r.intervention_id === facturee.id)).toBe(false);
+  });
+
   it("le journal cite le numéro du bon", () => {
     expect(table(lots, "journal").map((j) => j.texte)).toContain("Bon BI-2026-0002 signé");
   });

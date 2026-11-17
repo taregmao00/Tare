@@ -29,6 +29,8 @@ Dans Supabase → SQL Editor, coller puis exécuter chaque fichier **dans cet or
 2. `20261109130000_tables_metier.sql` (séance 6)
 3. `20261110090000_cloisonnement_lecture.sql` (séance 7 : qui voit quoi)
 4. `20261112090000_ecriture_clients_sites_instruments.sql` (phase 2, bloc 1 : qui peut créer et modifier clients, sites, instruments)
+5. `20261116090000_alerte_instrument_double.sql` (bloc 1, séance 4 : alerte « instrument en double possible »)
+6. `20261117090000_reference_externe.sql` (référence externe des interventions)
 
 ### Données de démonstration
 

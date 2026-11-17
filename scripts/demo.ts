@@ -186,6 +186,7 @@ const NOMS: Record<string, string> = {
   article: "Articles du catalogue",
   intervention: "Interventions",
   intervention_instrument: "Instruments des interventions",
+  intervention_reference: "Références externes",
   segment_chrono: "Segments de chrono",
   journal: "Lignes de journal",
   bon: "Bons signés",

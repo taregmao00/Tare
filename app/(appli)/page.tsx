@@ -1,7 +1,9 @@
+import Form from "next/form";
+import Link from "next/link";
 import { Ecran, ErreurLecture, SansAcces, Vide } from "@/app/_composants/etats";
 import { LIBELLES_STATUT, LIBELLES_TYPE } from "@/lib/regles";
 import { listerInterventions, type InterventionListee } from "@/lib/supabase/interventions";
-import { session } from "@/lib/supabase/utilisateur-courant";
+import { libelleReference, session } from "@/lib/supabase/utilisateur-courant";
 
 /** Liste des interventions, en lecture seule (filtres, compteurs et actions : phase 2, bloc 2). */
 export default function Interventions() {
@@ -16,12 +18,24 @@ async function Contenu() {
   const { supabase, utilisateur } = await session();
   if (utilisateur === null || utilisateur === "sans_fiche") return <SansAcces connecte={utilisateur !== null} />;
 
-  const liste = await listerInterventions(supabase);
+  const [liste, libelle] = await Promise.all([listerInterventions(supabase), libelleReference()]);
   const toutesAgences = utilisateur.agence === null;
 
   return (
     <>
       <h1 className="titre-page">Interventions</h1>
+
+      <Form action="/references" className="recherche" role="search">
+        <label>
+          <span>Rechercher par {libelle.toLowerCase()}</span>
+          <span className="recherche-ligne">
+            <input type="search" name="r" autoComplete="off" autoCapitalize="characters" spellCheck={false} />
+            <button type="submit" className="bouton-action">
+              Chercher
+            </button>
+          </span>
+        </label>
+      </Form>
 
       {!liste.ok ? (
         <ErreurLecture quoi="Interventions" code={liste.code} detail={liste.detail} />
@@ -41,7 +55,12 @@ async function Contenu() {
           </p>
           <ul className="liste">
             {liste.interventions.map((intervention) => (
-              <CarteIntervention key={intervention.id} intervention={intervention} avecAgence={toutesAgences} />
+              <CarteIntervention
+                key={intervention.id}
+                intervention={intervention}
+                avecAgence={toutesAgences}
+                libelleReference={libelle}
+              />
             ))}
           </ul>
         </>
@@ -59,29 +78,47 @@ const formatReception = new Intl.DateTimeFormat("fr-FR", {
   minute: "2-digit",
 });
 
-function CarteIntervention({ intervention: i, avecAgence }: { intervention: InterventionListee; avecAgence: boolean }) {
+function CarteIntervention({
+  intervention: i,
+  avecAgence,
+  libelleReference,
+}: {
+  intervention: InterventionListee;
+  avecAgence: boolean;
+  libelleReference: string;
+}) {
   return (
-    <li className={i.chronoTourne ? "carte carte-intervention chrono-tourne" : "carte carte-intervention"}>
-      <div className="ligne-entre">
-        <span className="numero">{i.numero}</span>
-        <span className="pastilles">
-          {i.urgente && <span className="pastille pastille-urgent">Urgent</span>}
-          <span className={`pastille pastille-${i.statutAffiche}`}>{LIBELLES_STATUT[i.statutAffiche]}</span>
+    <li>
+      <Link
+        href={`/interventions/${i.id}`}
+        className={i.chronoTourne ? "carte carte-lien carte-intervention chrono-tourne" : "carte carte-lien carte-intervention"}
+      >
+        <span className="ligne-entre">
+          <span className="numero">{i.numero}</span>
+          <span className="pastilles">
+            {i.urgente && <span className="pastille pastille-urgent">Urgent</span>}
+            <span className={`pastille pastille-${i.statutAffiche}`}>{LIBELLES_STATUT[i.statutAffiche]}</span>
+          </span>
         </span>
-      </div>
-      <p className="titre-carte">{i.client}</p>
-      <p className="discret">
-        {i.site}
-        {avecAgence && i.agence && ` · ${i.agence}`}
-      </p>
-      <p>
-        {LIBELLES_TYPE[i.type]}
-        {i.instruments.length > 0 && <span className="numero"> · {i.instruments.join(" + ")}</span>}
-      </p>
-      <p className="ligne-entre pied">
-        <span>{i.titulaire ?? "Pas encore prise"}</span>
-        <span>Reçue {formatReception.format(i.recueLe)}</span>
-      </p>
+        <span className="titre-carte">{i.client}</span>
+        <span className="discret">
+          {i.site}
+          {avecAgence && i.agence && ` · ${i.agence}`}
+        </span>
+        <span>
+          {LIBELLES_TYPE[i.type]}
+          {i.instruments.length > 0 && <span className="numero"> · {i.instruments.join(" + ")}</span>}
+        </span>
+        {i.reference && (
+          <span className="discret">
+            {libelleReference} : <span className="reference">{i.reference}</span>
+          </span>
+        )}
+        <span className="ligne-entre pied">
+          <span>{i.titulaire ?? "Pas encore prise"}</span>
+          <span>Reçue {formatReception.format(i.recueLe)}</span>
+        </span>
+      </Link>
     </li>
   );
 }

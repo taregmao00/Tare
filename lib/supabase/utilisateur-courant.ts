@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Role } from "@/lib/regles";
+import { LIBELLE_REFERENCE_PAR_DEFAUT, type Role } from "@/lib/regles";
 import { supabaseServeur } from "./serveur";
 
 export interface UtilisateurCourant {
@@ -77,4 +77,20 @@ export async function utilisateurCourant(
 export const session = cache(async () => {
   const supabase = await supabaseServeur();
   return { supabase, utilisateur: await utilisateurCourant(supabase) };
+});
+
+/**
+ * Nom affiché du champ « référence externe » de l'entreprise (« N° de message », « N° d'OS »…).
+ * Lu à part, avec une valeur par défaut : si la base n'est pas encore à jour, l'appli marche quand même.
+ */
+export const libelleReference = cache(async (): Promise<string> => {
+  const { supabase, utilisateur } = await session();
+  if (utilisateur === null || utilisateur === "sans_fiche") return LIBELLE_REFERENCE_PAR_DEFAUT;
+  const { data, error } = await supabase
+    .from("entreprise")
+    .select("libelle_reference_externe")
+    .eq("id", utilisateur.entrepriseId)
+    .maybeSingle<{ libelle_reference_externe: string }>();
+  if (error) console.error(`[réglages] Libellé de la référence externe illisible (${error.code}) : ${error.message}`);
+  return data?.libelle_reference_externe ?? LIBELLE_REFERENCE_PAR_DEFAUT;
 });

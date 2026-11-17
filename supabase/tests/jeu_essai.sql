@@ -22,8 +22,8 @@ begin
     values (pg_temp.id(p, 4), pg_temp.id(p, 3), entreprise, pg_temp.id(p, 2));
   insert into public.segment_chrono (id, entreprise_id, intervention_id, demarre_par_id, appareil, debut, fin)
     values (pg_temp.id(p, 5), entreprise, pg_temp.id(p, 4), technicien, 'tel', '2026-11-09 09:00Z', '2026-11-09 09:50Z');
-  insert into public.journal (id, entreprise_id, intervention_id, auteur_id, texte)
-    values (pg_temp.id(p, 6), entreprise, pg_temp.id(p, 4), technicien, 'Chrono démarré');
+  -- La ligne de journal de chaque agence est écrite par la base, à l'ajout de la référence externe
+  -- (voir plus bas) : une seule ligne de journal par agence, comme pour les autres tables.
   insert into public.bon (id, entreprise_id, intervention_id, reference_provisoire, signe_le, titulaire_id, travaux_realises,
       minutes_chrono, nombre_personnes, minutes_facturees_par_personne, taux_horaire_applique_centimes, distance_km,
       forfait_deplacement_applique_centimes, libelle_zone, nombre_passages, nombre_forfaits_factures, nom_signataire, signature, total_ht_centimes)
@@ -37,6 +37,8 @@ begin
     values (pg_temp.id(p, 9), entreprise, pg_temp.id(p, 4), pg_temp.id(p, 7), 'photos/' || p || '.jpg', '2026-11-09 09:30Z');
   insert into public.alerte (id, entreprise_id, agence_id, type, intervention_id, detail)
     values (pg_temp.id(p, 10), entreprise, agence, 'ecart_horloge', pg_temp.id(p, 4), 'Écart de 20 min');
+  insert into public.intervention_reference (id, entreprise_id, intervention_id, reference)
+    values (pg_temp.id(p, 11), entreprise, pg_temp.id(p, 4), 'OS-' || p);
 end $$;
 
 -- ---------------------------------------------------------------------------

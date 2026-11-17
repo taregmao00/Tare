@@ -242,6 +242,14 @@ const INTERVENTIONS: {
   },
 ];
 
+/** Référence externe fictive de quelques interventions de la démonstration. */
+const REFERENCES_DEMO: Record<string, string> = {
+  "INT-1039": "OS-2026-0412",
+  "INT-1041": "OS-2026-0412",
+  "INT-1045": "OS-2026-0418",
+  "INT-1046": "OS-2026-0420",
+};
+
 /** Image de signature fictive (un point transparent) : aucun vrai paraphe dans la démonstration. */
 const SIGNATURE_FICTIVE =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
@@ -399,6 +407,20 @@ export function construireDemo(ctx: ContexteDemo): LotDemo[] {
     }];
   });
   lots.push({ table: "segment_chrono", cle: "id", lignes: segments.map((s) => s.ligne) });
+
+  // Références externes fictives (N° de message, N° d'OS… selon l'entreprise). Deux interventions de
+  // la Carrière Ferrand partagent la même, pour montrer la vue par référence. Aucune sur INT-1037 :
+  // une intervention « Facturée » ne reçoit plus de référence.
+  lots.push({
+    table: "intervention_reference",
+    cle: "intervention_id",
+    lignes: Object.entries(REFERENCES_DEMO).map(([numero, reference]) => ({
+      id: id(`reference:${numero}`),
+      entreprise_id,
+      intervention_id: id(`intervention:${numero}`),
+      reference,
+    })),
+  });
 
   lots.push({
     table: "journal",

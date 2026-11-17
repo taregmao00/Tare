@@ -700,3 +700,101 @@ a {
   padding: 10px 12px;
   height: auto;
 }
+
+/* ---------------------------------------------------------------------------
+   Référence externe : saisie avec suggestions, vue par référence, journal.
+   --------------------------------------------------------------------------- */
+.reference {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+a.reference {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.champ-reference {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.champ-reference label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion {
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  border: 1px solid var(--bordure);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--texte);
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.suggestion:active {
+  background: var(--neutre-fond);
+}
+
+.total-reference strong {
+  font-size: 1.125rem;
+}
+
+.carte.barre {
+  opacity: 0.7;
+}
+
+.carte.barre .numero {
+  text-decoration: line-through;
+}
+
+.journal {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.journal li {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bordure);
+}
+
+.journal .discret {
+  font-size: 0.875rem;
+}
+
+.succes {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+/* La carte d'une intervention est maintenant un lien vers sa fiche. */
+.carte-intervention.carte-lien {
+  justify-content: flex-start;
+}

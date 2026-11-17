@@ -48,10 +48,10 @@ Une appli mobile (PWA) qui permet aux techniciens d'une société de pesage de *
 
 | Rôle | Peut faire |
 | --- | --- |
-| Technicien | Voir les interventions de son agence, prendre une intervention, lancer/mettre en pause le chrono, corriger son propre temps (avec motif), remplir et faire signer un bon, créer une demande, **créer un instrument depuis une intervention** (sans pouvoir modifier ni supprimer ceux du parc) |
+| Technicien | Voir les interventions de son agence, prendre une intervention, lancer/mettre en pause le chrono, corriger son propre temps (avec motif), remplir et faire signer un bon, créer une demande, saisir la **référence externe** d'une intervention (§6.11), **créer un instrument depuis une intervention** (sans pouvoir modifier ni supprimer ceux du parc) |
 | Chef d'agence | Tout ce que fait le technicien + gérer clients, sites, instruments de son agence, **corriger le temps d'un technicien avant signature** (avec motif), créer un bon rectificatif, marquer « Facturée » |
-| Gestionnaire (bureau / siège) | Voir les interventions et les bons de **toutes les agences** en lecture, marquer « Facturée », exporter en **CSV simple** les bons terminés (numéro, date, client, agence, MO, déplacement, pièces, petit matériel, total HT) sur une période. Ne gère ni clients, ni instruments, ni interventions, ne touche pas au chrono |
-| Administrateur (entreprise) | Tout + réglages de l'entreprise (tarifs, forfaits, catalogue, utilisateurs, habilitations, agences) |
+| Gestionnaire (bureau / siège) | Voir les interventions et les bons de **toutes les agences** en lecture, marquer « Facturée », exporter en **CSV simple** les bons terminés (numéro, date, client, agence, MO, déplacement, pièces, petit matériel, total HT) sur une période. Ne gère ni clients, ni instruments, ni interventions (il lit la référence externe sans la modifier), ne touche pas au chrono |
+| Administrateur (entreprise) | Tout + réglages de l'entreprise (tarifs, forfaits, catalogue, nom du champ « référence externe », utilisateurs, habilitations, agences) |
 
 Un utilisateur a un attribut **habilité vérifications** (oui/non). Seuls les habilités peuvent prendre ou démarrer une intervention de type Vérification.
 
@@ -65,13 +65,14 @@ Un utilisateur a un attribut **habilité vérifications** (oui/non). Seuls les h
 
 Toutes les tables métier portent `entreprise_id`. L'intervention porte aussi **`agence_id`** directement (même si on peut la retrouver par le client), pour des règles de cloisonnement simples. Noms de tables et de colonnes en snake_case, en français, **sans accents** (ex. `recue_le`, `echeance_verification`). Les accents restent dans l'interface. Les noms ci-dessous décrivent le contenu ; adapte-les à cette règle.
 
-- **entreprise** : nom, réglages (taux horaire, limites et montants des forfaits de déplacement, montant du forfait consommables, préfixe de numérotation).
+- **entreprise** : nom, réglages (taux horaire, limites et montants des forfaits de déplacement, montant du forfait consommables, préfixe de numérotation, **nom affiché du champ « référence externe »**, « Référence externe » par défaut).
 - **agence** : entreprise, nom, adresse.
 - **utilisateur** : entreprise, agence, nom, email, rôle, habilité_verifications, actif.
 - **client** : entreprise, agence, nom, critique (bool), note (ex. « un seul pont-bascule, expéditions à l'arrêt »).
 - **site** : client, nom, adresse, contact (nom, fonction, téléphone, **email**), **distance_km** (aller, depuis l'agence).
 - **instrument** : site, numéro interne (ex. `INS-0421`), type, marque, modèle, n° de série, portée max, échelon (e), millésime, emplacement, statut_metrologie, échéance_verification, motif_statut.
 - **intervention** : numéro (`INT-0001`…), type (Réparation | Vérification | Installation), client, site, priorité (normale | urgente), statut, **titulaire** (utilisateur), reçue_le, durée estimée, nombre de personnes prévu, description.
+- **intervention_reference** : intervention, référence externe (texte tel que saisi), forme de comparaison (calculée par la base), ajoutée par / le, modifiée par / le. **Non unique** : plusieurs interventions peuvent partager la même référence. **Une seule référence par intervention en V1** (contrainte d'unicité sur l'intervention, à retirer le jour où il en faudra plusieurs). Voir §6.11.
 - **intervention_instrument** : intervention, instrument. **Une intervention concerne un ou plusieurs instruments du même site** (ex. 5 balances d'un primeur vérifiées dans la même visite).
 - **segment_chrono** : intervention, démarré_par (utilisateur), appareil (identifiant du téléphone), début, fin (nulle si en cours), recu_serveur_le. **Le chrono appartient à l'intervention**, pas au technicien.
 - **journal** : intervention, horodatage, auteur, texte. Ajout seul.
@@ -186,7 +187,7 @@ Champs obligatoires pour valider : travaux réalisés, nombre de personnes, nom 
 - **l'année est celle de la signature** (un bon signé le 31/12 et synchronisé le 2/01 prend le prochain numéro de l'année de signature) ;
 - les numéros suivent l'ordre de synchronisation, pas forcément celui de signature : c'est accepté, car le bon d'intervention n'est pas une facture (la facture est numérotée par le logiciel de facturation).
 
-Le PDF est généré et envoyé par mail **après** attribution du numéro définitif. L'écran indique « Numéro attribué à l'envoi ».
+Le PDF est généré et envoyé par mail **après** attribution du numéro définitif. L'écran indique « Numéro attribué à l'envoi ». Le PDF porte la **référence externe** de l'intervention (§6.11), sous son nom configuré, telle qu'elle est au moment de l'envoi.
 
 **Bon rectificatif :** si une erreur est découverte après signature, le titulaire ou le chef d'agence crée un rectificatif depuis le bon : copie modifiable du bon, **motif obligatoire**, nouvelle signature du client, nouveau numéro. Le bon d'origine passe en « Annulé et remplacé par BI-… » (reste consultable, barré). Impossible si l'intervention est « Facturée ». Possible hors ligne, comme un bon normal, mais **seulement si le bon d'origine a déjà son numéro définitif** (sinon le bouton indique « Disponible après l'envoi du bon »). Si le serveur refuse un rectificatif à la synchronisation (intervention passée « Facturée » entre-temps), le rectificatif est **conservé avec le statut « Refusé »**, visible, **sans numéro définitif** (la séquence reste sans trou), et une alerte est créée pour le chef d'agence et le gestionnaire (§6.10).
 
@@ -250,6 +251,19 @@ Le technicien ne reçoit pas d'alertes : il est prévenu par un **message dans l
 
 ---
 
+### 6.11 Référence externe (décision du 17/11/2026)
+
+Chaque société de pesage rattache ses interventions à un numéro qui lui est propre (« N° de message », « N° d'OS », « N° de dossier »…) pour les rapprocher de ses commandes et de ses factures. Tare le stocke et le ressort partout ; il ne le remplace pas.
+
+- **Identifiants** : l'intervention garde son identifiant interne et son numéro `INT-` ; la référence externe est un champ à part, **facultatif**, modifiable après la création.
+- **Nom du champ** : réglage de l'entreprise (« Référence externe » par défaut), changé par l'administrateur. Rien de propre à une société n'est écrit dans le code.
+- **Non unique** : plusieurs interventions peuvent partager la même référence. Une seule référence par intervention en V1.
+- **Comparaison** : les espaces en trop et les majuscules ne comptent pas (« ␣os  2026-0412␣ » = « OS 2026-0412 ») ; les tirets, points et espaces intérieurs comptent (« OS-12 » ≠ « OS12 »). La règle est dans `lib/regles/reference.ts`, la base applique la même.
+- **Saisie** : technicien, chef d'agence (leur agence), administrateur (toutes). Le gestionnaire la lit sans la modifier. Pendant la frappe, l'appli propose les références déjà utilisées qui ressemblent à la saisie, avec les interventions qui les portent, pour éviter les doublons dus aux fautes de frappe. Vider le champ retire la référence.
+- **Jusqu'à quand** : modifiable même après la signature du bon (le numéro d'OS arrive souvent après coup), **figée une fois l'intervention « Facturée »**. Chaque ajout, modification ou retrait est écrit au journal par la base (auteur, avant/après).
+- **Vue par référence** : toutes les interventions visibles qui portent la référence, avec le total de main-d'œuvre facturable. **L'arrondi du §6.3 reste fait par intervention**, puis on additionne : 2 interventions de 20 min → 30 + 30 = 1 h (et non 40 min arrondies). Seuls les bons valides comptent (jamais un bon « Annulé et remplacé » ni un rectificatif « Refusé ») ; les interventions sans bon signé sont listées sans montant.
+- **Hors ligne** : en attendant le bloc 3, la saisie et les suggestions demandent du réseau.
+
 ## 7. Écrans (V1)
 
 Navigation en bas **selon le rôle** :
@@ -263,16 +277,16 @@ Navigation en bas **selon le rôle** :
 
 La barre du chrono actif s'affiche au-dessus de la navigation (temps, montant, Pause/Reprendre). Le badge « À traiter » indique le nombre d'alertes non traitées.
 
-1. **Interventions** : compteurs (Urgentes, À faire, En cours, À facturer), filtres (Toutes, Les miennes, À faire, Prises, En cours, Terminées, Facturées), cartes.
-2. **Fiche intervention** : description, actions selon le statut, chrono, client (contact, distance, forfait), **liste des instruments** avec la vignette de chacun et un bouton « Ajouter un instrument du site », journal.
+1. **Interventions** : compteurs (Urgentes, À faire, En cours, À facturer), filtres (Toutes, Les miennes, À faire, Prises, En cours, Terminées, Facturées), cartes (avec la référence externe), recherche par référence externe → vue par référence (§6.11).
+2. **Fiche intervention** : description, référence externe (saisie avec suggestions), actions selon le statut, chrono, client (contact, distance, forfait), **liste des instruments** avec la vignette de chacun et un bouton « Ajouter un instrument du site », journal.
 3. **Bon** : main-d'œuvre (nombre de personnes) et déplacement (passages, forfaits), correction de temps, travaux, pièces et petit matériel, **une section par instrument** (chaîne de mesure touchée, ou résultat et échéance, observations), photos, email d'envoi, signataire, signature au doigt, total HT en direct.
 4. **Bon signé** : vue « papier », tampon « Signé et verrouillé », bouton « Créer un rectificatif » (selon rôle).
 5. **Parc** : échéances et alertes, recherche (n° d'instrument, client, n° de série), fiche instrument avec historique.
 6. **Nouvelle demande** : client, site, **un ou plusieurs instruments** du site (cases à cocher), type, priorité, description, durée estimée, nombre de personnes.
 7. **À traiter** (chef d'agence, gestionnaire, administrateur) : liste des alertes du §6.10 ; pour le gestionnaire, aussi la liste des bons terminés à facturer et l'export CSV.
 
-   **Export CSV** : période choisie sur la **date de signature** ; contient les bons valides, y compris les rectificatifs qui remplacent un bon ; **jamais** les bons « Annulé et remplacé » ni les rectificatifs « Refusé » ; une colonne indique si le bon est déjà « Facturé ».
-8. **Réglages** : utilisateur, taux horaire, règle d'arrondi (affichée), forfaits de déplacement, forfait consommables, catalogue (saisie + import CSV).
+   **Export CSV** : une colonne **référence externe** (titre = nom configuré) ; période choisie sur la **date de signature** ; contient les bons valides, y compris les rectificatifs qui remplacent un bon ; **jamais** les bons « Annulé et remplacé » ni les rectificatifs « Refusé » ; une colonne indique si le bon est déjà « Facturé ».
+8. **Réglages** : utilisateur, taux horaire, règle d'arrondi (affichée), forfaits de déplacement, forfait consommables, nom du champ « référence externe », catalogue (saisie + import CSV).
 
 **Règles d'interface :** mobile d'abord (Android), cibles tactiles ≥ 44 px, champs en 16 px minimum, un bon doit se remplir en **moins de 2 à 3 minutes**, textes en français clair, thèmes clair et sombre, état « vide » explicite sur chaque liste.
 
@@ -336,6 +350,7 @@ La barre du chrono actif s'affiche au-dessus de la navigation (temps, montant, P
   - export CSV : un bon annulé et remplacé n'apparaît pas, son rectificatif apparaît
   - horloge : au moment de la synchronisation, le téléphone annonce 10:00 alors que le serveur est à 10:20 → écart de 20 min signalé au journal (un bon signé hors ligne la veille et envoyé aujourd'hui n'est PAS un écart : on compare l'heure du téléphone au moment de l'envoi, pas l'heure de signature)
   - métrologie : réparation avec chaîne de mesure touchée → instrument « À vérifier » + vérification créée
+  - référence externe : 2 interventions de 20 min sous la même référence → 30 + 30 = 1 h facturée ; « os  2026-0412 » et « OS 2026-0412 » sont la même référence ; un gestionnaire ne la modifie pas ; une intervention « Facturée » garde la sienne ; chaque changement est écrit au journal
 - Pas de nouvelle dépendance sans m'expliquer pourquoi.
 - **Point de ménage** tous les 2 ou 3 blocs de la phase 2 : relire le projet, signaler le code dupliqué ou mort, proposer une simplification.
 
